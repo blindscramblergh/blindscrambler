@@ -1,0 +1,19 @@
+[project]
+name = "blindscrambler"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "blindscramblergh", email = "blindscrambler@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.maturin]
+module-name = "blindscrambler._core"
+python-packages = ["blindscrambler"]
+python-source = "src"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
