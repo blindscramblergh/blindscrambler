@@ -1,0 +1,14 @@
+/Users/syedraza/blindscrambler/target/release/deps/pyo3_build_config-485f7efd6b2e6f06.d: /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs /Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config-file.txt /Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config.txt
+
+/Users/syedraza/blindscrambler/target/release/deps/libpyo3_build_config-485f7efd6b2e6f06.rlib: /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs /Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config-file.txt /Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config.txt
+
+/Users/syedraza/blindscrambler/target/release/deps/libpyo3_build_config-485f7efd6b2e6f06.rmeta: /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs /Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs /Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config-file.txt /Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config.txt
+
+/Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs:
+/Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs:
+/Users/syedraza/Library/Caches/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs:
+/Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config-file.txt:
+/Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out/pyo3-build-config.txt:
+
+# env-dep:CARGO_PKG_VERSION=0.22.6
+# env-dep:OUT_DIR=/Users/syedraza/blindscrambler/target/release/build/pyo3-build-config-da1a330592cf50bd/out

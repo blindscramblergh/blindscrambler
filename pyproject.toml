@@ -7,7 +7,11 @@ authors = [
     { name = "blindscramblergh", email = "blindscrambler@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "numpy>=2.3.3",
+    "torch>=2.8.0",
+    "twine>=6.1.0",
+]
 
 [tool.maturin]
 module-name = "blindscrambler._core"
