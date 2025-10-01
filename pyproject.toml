@@ -1,6 +1,6 @@
 [project]
 name = "blindscrambler"
-version = "0.1.0"
+version = "0.1.6"
 description = "Add your description here"
 readme = "README.md"
 authors = [
@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "matplotlib>=3.10.6",
     "numpy>=2.3.3",
     "torch>=2.8.0",
     "twine>=6.1.0",
