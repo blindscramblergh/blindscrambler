@@ -8,7 +8,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-# make a Linear Regression Class: 
 class LinearRegression:
     def __init__(self, learning_rate: float = 0.01, max_epochs: int = 1000, tolerance: float = 1e-6):
         pass
