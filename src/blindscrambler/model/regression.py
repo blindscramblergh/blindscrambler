@@ -12,7 +12,11 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from typing import Tuple, Optional
 import warnings
+from torcheval.metrics import R2Score 
+import polars
+from sklearn.model_selection import train_test_split
 
+# add a linear Regression class:
 class LinearRegression:
     """
     A PyTorch-based Linear Regression implementation for one variable.
@@ -23,310 +27,259 @@ class LinearRegression:
     Features:
     - Gradient-based optimization using PyTorch
     - Confidence intervals for parameters w_1 and w_0
-    - Visualization with confidence bands
     """
 
-    def __init__(self, learning_rate: float = 0.01, max_epochs: int = 1000, 
+    def __init__(self, learning_rate: float = 0.01, max_epochs: int = 1000,
                  tolerance: float = 1e-6):
-        """
-        Initialize the Linear Regression model.
         
-        Args:
-            learning_rate: Learning rate for gradient descent
-            max_epochs: Maximum number of training epochs
-            tolerance: Convergence tolerance for early stopping
         """
+        The Constructor function for LinearRegression Class
+
+        Params:
+            - learning rate, for the gradient descent algorithm
+            - maximum number of epochs 
+            - tolerance, to know if things have converged
+        """
+
+        # make the arguments
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
         self.tolerance = tolerance
-        
-        # Model parameters
-        self.w_1 = nn.Parameter(torch.randn(1, requires_grad=True))  # slope
-        self.w_0 = nn.Parameter(torch.randn(1, requires_grad=True))  # intercept
-        
-        # Training data storage
+
+        self.nsamples = None
         self.X_train = None
         self.y_train = None
-        
-        # Model statistics for confidence intervals
-        self.n_samples = None
-        self.residual_sum_squares = None
-        self.X_mean = None
-        self.X_var = None
+        self.X_test = None
+        self.y_test = None
+
+        # to see if the instance is fitted or not
         self.fitted = False
-        
-        # Loss function and optimizer
-        self.criterion = nn.MSELoss()
-        self.optimizer = optim.SGD([self.w_1, self.w_0], lr=self.learning_rate)
-        
-        # Training history
-        self.loss_history = []
+
+        # the model parameters
+        self.w_0 = nn.Parameter(torch.randn(1, requires_grad=True)) # intercept
+        self.w_1 = nn.Parameter(torch.randn(1, requires_grad=True)) # slope
+
+        # loss function and its optimizer
+        self.lossfunction = nn.MSELoss()
+        self.optimizer = optim.SGD([self.w_0, self.w_1], lr = self.learning_rate)
+
+        # hold intermediate values of w_0 and w_1 and loss
+        self.inter_w_0 = []
+        self.inter_w_1 = []
+        self.inter_loss = []
+
     
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
+    def forward(self, X: torch.tensor) -> torch.tensor:
         """
-        Forward pass of the linear model.
-        
-        Args:
-            X: Input tensor of shape (n_samples,)
-            
+        Forward function for to specify linear model and compute the response
+
+        Params:
+            - X: torch.tensor
+            the input vector of size (n_samples, )
         Returns:
-            Predictions tensor of shape (n_samples,)
+            - self.w_1 * X + self.w_0
+    `       the output is linear model result
+        
         """
         return self.w_1 * X + self.w_0
+
     
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'LinearRegression':
+    def fit(self, X_train: np.ndarray, y_train: np.ndarray, X_test: np.ndarray, y_test: np.ndarray) -> 'LinearRegression':
         """
-        Fit the linear regression model to the training data.
-        
-        Args:
-            X: Input features of shape (n_samples,)
-            y: Target values of shape (n_samples,)
-            
-        Returns:
-            self: Returns the fitted model instance
+        The function where the training happens
+
+        Params:
+            - X, the training dataset of features 
+            - y, the training dataset of target
         """
-        # Convert to PyTorch tensors
-        self.X_train = torch.tensor(X, dtype=torch.float32)
-        self.y_train = torch.tensor(y, dtype=torch.float32)
-        self.n_samples = len(X)
-        
-        # Store statistics for confidence intervals
-        self.X_mean = float(np.mean(X))
-        self.X_var = float(np.var(X, ddof=1))  # Sample variance
-        
-        # Training loop
+
+        # convert to Pytorch tensors:
+        self.X_train = torch.tensor(X_train, dtype=torch.float32)
+        self.y_train = torch.tensor(y_train, dtype=torch.float32)
+        self.X_test = torch.tensor(X_test, dtype=torch.float32)
+        self.y_test = torch.tensor(y_test, dtype=torch.float32)
+        self.nsamples = len(X_train) # samples in the training set
+
+        # the training loop:
         prev_loss = float('inf')
-        
+
+        # reset history
+        self.inter_loss.clear()
+        self.inter_w_0.clear()
+        self.inter_w_1.clear()
+
         for epoch in range(self.max_epochs):
-            # Zero gradients
+            # reset the gradients
             self.optimizer.zero_grad()
-            
-            # Forward pass
-            y_pred = self.forward(self.X_train)
-            
-            # Compute loss
-            loss = self.criterion(y_pred, self.y_train)
-            
-            # Backward pass
+
+            # premature prediction
+            y_train_pred = self.forward(self.X_train)
+
+            # loss function
+            loss = self.lossfunction(y_train_pred, self.y_train)
+
+            # automatic gradient backward pass 
             loss.backward()
-            
-            # Update parameters
+
+            # update model parameters
             self.optimizer.step()
-            
-            # Store loss history
-            current_loss = loss.item()
-            self.loss_history.append(current_loss)
-            
-            # Check for convergence
+
+            # get the current loss and save it 
+            current_loss = float(loss.detach().item())
+
+            # save intermediate loss and model parameters 
+            self.inter_loss.append(current_loss)
+            self.inter_w_0.append(float(self.w_0.detach().item()))
+            self.inter_w_1.append(float(self.w_1.detach().item()))
+
             if abs(prev_loss - current_loss) < self.tolerance:
                 print(f"Converged after {epoch + 1} epochs")
                 break
-            
+
             prev_loss = current_loss
-        
-        # Compute residual sum of squares for confidence intervals
-        with torch.no_grad():
-            y_pred = self.forward(self.X_train)
-            residuals = self.y_train - y_pred
-            self.residual_sum_squares = float(torch.sum(residuals ** 2))
-        
+
+        # make predictions on the test set
+        y_test_pred = self.forward(self.X_test)
+
+        # create an R^2 metric type 
+        R2 = R2Score()
+        R2.update(y_test_pred, self.y_test)
+        print("The R2 score for the test set is :", R2.compute())
+
         self.fitted = True
-        return self
-    
+        return self 
+
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
-        Make predictions on new data.
-        
-        Args:
-            X: Input features of shape (n_samples,)
-            
+        Make predictions on the new/unseen data
+
+        Params:
+            - feature vector X for the test set.
         Returns:
-            Predictions as numpy array
+            - predictions in a numpy array
         """
+
+        # making sure that the model is fitted lol
         if not self.fitted:
             raise ValueError("Model must be fitted before making predictions")
         
+        # make it a tensor
         X_tensor = torch.tensor(X, dtype=torch.float32)
-        
+
         with torch.no_grad():
             predictions = self.forward(X_tensor)
-        
+
         return predictions.numpy()
+
     
-    def get_parameters(self) -> Tuple[float, float]:
+    def analysis_plot(self, show: bool = True, save_path: Optional[str] = None):
         """
-        Get the fitted parameters.
-        
-        Returns:
-            Tuple of (w_1, w_0) - slope and intercept
+        Create a 2x2 figure showing:
+        - Original data with fitted regression line
+        - Training loss over epochs
+        - w0 trajectory over epochs
+        - w1 trajectory over epochs
         """
         if not self.fitted:
-            raise ValueError("Model must be fitted before accessing parameters")
-        
-        return float(self.w_1.item()), float(self.w_0.item())
-    
-    def parameter_confidence_intervals(self, confidence_level: float = 0.95) -> dict:
-        """
-        Compute confidence intervals for parameters w_1 and w_0.
-        
-        Args:
-            confidence_level: Confidence level (e.g., 0.95 for 95%)
-            
-        Returns:
-            Dictionary containing confidence intervals for both parameters
-        """
-        if not self.fitted:
-            raise ValueError("Model must be fitted before computing confidence intervals")
-        
-        # Degrees of freedom
-        df = self.n_samples - 2
-        
-        # Critical t-value
-        alpha = 1 - confidence_level
-        t_critical = stats.t.ppf(1 - alpha/2, df)
-        
-        # Standard error of regression
-        mse = self.residual_sum_squares / df
-        se_regression = np.sqrt(mse)
-        
-        # Standard error for w_1 (slope)
-        se_w1 = se_regression / np.sqrt(self.n_samples * self.X_var)
-        
-        # Standard error for w_0 (intercept)
-        se_w0 = se_regression * np.sqrt(1/self.n_samples + self.X_mean**2 / (self.n_samples * self.X_var))
-        
-        # Get current parameter values
-        w_1_val, w_0_val = self.get_parameters()
-        
-        # Compute confidence intervals
-        w_1_ci = (
-            w_1_val - t_critical * se_w1,
-            w_1_val + t_critical * se_w1
+            raise ValueError("Model must be fitted before plotting.")
+        if len(self.inter_loss) == 0:
+            warnings.warn("No training history recorded; plots may be empty.")
+
+        fig, axs = plt.subplots(2, 2, figsize=(12, 8))
+
+        # 1) Data + fitted line
+        ax = axs[0, 0]
+
+        # scatter only the test set
+        if self.X_test is not None and self.y_test is not None:
+            ax.scatter(
+                self.X_test.detach().cpu().numpy(),
+                self.y_test.detach().cpu().numpy(),
+                s=12, alpha=0.7, label="Test"
+            )
+            # Line range from min/max of test X only
+            xmin = float(torch.min(self.X_test).item())
+            xmax = float(torch.max(self.X_test).item())
+        else:
+            xmin, xmax = -1.0, 1.0
+
+        x_line = torch.linspace(xmin, xmax, 200)
+        with torch.no_grad():
+            y_line = self.forward(x_line).detach().cpu().numpy()
+            w0 = float(self.w_0.detach().item())
+            w1 = float(self.w_1.detach().item())
+        ax.plot(
+            x_line.detach().cpu().numpy(),
+            y_line,
+            color="crimson",
+            label=f"Fit: y = {w1:.4f} x + {w0:.4f}"
         )
-        
-        w_0_ci = (
-            w_0_val - t_critical * se_w0,
-            w_0_val + t_critical * se_w0
-        )
-        
-        return {
-            'w_1_confidence_interval': w_1_ci,
-            'w_0_confidence_interval': w_0_ci,
-            'confidence_level': confidence_level,
-            'standard_errors': {
-                'se_w1': se_w1,
-                'se_w0': se_w0,
-                'se_regression': se_regression
-            }
-        }
-    
-    def plot_regression_with_confidence_band(self, confidence_level: float = 0.95, 
-                                           figsize: Tuple[int, int] = (10, 6),
-                                           title: Optional[str] = None) -> plt.Figure:
-        """
-        Plot the fitted regression line with confidence band.
-        
-        Args:
-            confidence_level: Confidence level for the band
-            figsize: Figure size tuple
-            title: Optional plot title
-            
-        Returns:
-            matplotlib Figure object
-        """
-        if not self.fitted:
-            raise ValueError("Model must be fitted before plotting")
-        
-        # Create figure
-        fig, ax = plt.subplots(figsize=figsize)
-        
-        # Convert training data to numpy for plotting
-        X_np = self.X_train.numpy()
-        y_np = self.y_train.numpy()
-        
-        # Create prediction range
-        X_range = np.linspace(X_np.min(), X_np.max(), 100)
-        y_pred_range = self.predict(X_range)
-        
-        # Compute confidence band
-        df = self.n_samples - 2
-        alpha = 1 - confidence_level
-        t_critical = stats.t.ppf(1 - alpha/2, df)
-        
-        mse = self.residual_sum_squares / df
-        se_regression = np.sqrt(mse)
-        
-        # Standard error for predictions (confidence band)
-        X_centered = X_range - self.X_mean
-        se_pred = se_regression * np.sqrt(1/self.n_samples + X_centered**2 / (self.n_samples * self.X_var))
-        
-        # Confidence band bounds
-        margin_of_error = t_critical * se_pred
-        y_upper = y_pred_range + margin_of_error
-        y_lower = y_pred_range - margin_of_error
-        
-        # Plot data points
-        ax.scatter(X_np, y_np, alpha=0.6, color='blue', label='Data points')
-        
-        # Plot regression line
-        ax.plot(X_range, y_pred_range, 'r-', linewidth=2, label='Fitted line')
-        
-        # Plot confidence band
-        ax.fill_between(X_range, y_lower, y_upper, alpha=0.3, color='red', 
-                       label=f'{int(confidence_level*100)}% Confidence band')
-        
-        # Get parameter values for display
-        w_1_val, w_0_val = self.get_parameters()
-        
-        # Labels and title
-        ax.set_xlabel('X')
-        ax.set_ylabel('y')
-        if title is None:
-            title = f'Linear Regression: y = {w_1_val:.3f}x + {w_0_val:.3f}'
-        ax.set_title(title)
+
+        ax.set_title("Test Data and Fitted Line")
+        ax.set_xlabel("X")
+        ax.set_ylabel("y")
         ax.legend()
-        ax.grid(True, alpha=0.3)
-        
-        plt.tight_layout()
-        return fig
+        ax.grid(True, alpha=0.2)
+
+        # 2) Loss
+        ax = axs[0, 1]
+        if self.inter_loss:
+            ax.plot(range(1, len(self.inter_loss) + 1), self.inter_loss, color="steelblue")
+        ax.set_title("Training Loss (MSE)")
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("Loss")
+        ax.grid(True, alpha=0.2)
+
+        # 3) w0 trajectory
+        ax = axs[1, 0]
+        if self.inter_w_0:
+            ax.plot(range(1, len(self.inter_w_0) + 1), self.inter_w_0, color="darkgreen")
+        ax.set_title("w0 trajectory")
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("w0")
+        ax.grid(True, alpha=0.2)
+
+        # 4) w1 trajectory
+        ax = axs[1, 1]
+        if self.inter_w_1:
+            ax.plot(range(1, len(self.inter_w_1) + 1), self.inter_w_1, color="darkorange")
+        ax.set_title("w1 trajectory")
+        ax.set_xlabel("Epoch")
+        ax.set_ylabel("w1")
+        ax.grid(True, alpha=0.2)
+
+        fig.tight_layout()
+        if save_path:
+            fig.savefig(save_path, dpi=150, bbox_inches="tight")
+        if show:
+            plt.show()
+        else:
+            plt.close(fig)
+        return fig, axs
     
-    def summary(self) -> dict:
-        """
-        Provide a summary of the fitted model.
-        
-        Returns:
-            Dictionary containing model summary statistics
-        """
-        if not self.fitted:
-            raise ValueError("Model must be fitted before generating summary")
-        
-        w_1_val, w_0_val = self.get_parameters()
-        
-        # R-squared calculation
-        y_mean = float(torch.mean(self.y_train))
-        ss_tot = float(torch.sum((self.y_train - y_mean) ** 2))
-        r_squared = 1 - (self.residual_sum_squares / ss_tot)
-        
-        # Adjusted R-squared
-        adj_r_squared = 1 - ((1 - r_squared) * (self.n_samples - 1) / (self.n_samples - 2))
-        
-        # RMSE
-        rmse = np.sqrt(self.residual_sum_squares / self.n_samples)
-        
-        return {
-            'parameters': {
-                'w_1 (slope)': w_1_val,
-                'w_0 (intercept)': w_0_val
-            },
-            'model_fit': {
-                'r_squared': r_squared,
-                'adjusted_r_squared': adj_r_squared,
-                'rmse': rmse,
-                'residual_sum_squares': self.residual_sum_squares
-            },
-            'training_info': {
-                'n_samples': self.n_samples,
-                'epochs_trained': len(self.loss_history),
-                'final_loss': self.loss_history[-1] if self.loss_history else None
-            }
-        }
+if __name__ == "__main__":
+
+    # the path of the file
+    csv_path = "/Users/syedraza/Desktop/UAH/Classes/Fall2025/CPE586-MachineLearning/HWs/hw3/Hydropower.csv"
+
+    # read in the needed data
+    data_frame = polars.read_csv(csv_path)["BCR", "AnnualProduction"]
+
+    # separate out features and targets
+    X = data_frame["BCR"]
+    y = data_frame["AnnualProduction"]
+
+    # train test split this
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+
+    # make a LinearRegression() instance
+    model = LinearRegression()
+
+    # .fit() takes test set as well because it has to calculate the R2 score
+    model.fit(X_train, y_train, X_test, y_test)
+
+    # make predictions
+    predictions = model.predict(X_test)
+
+    # make the required plots
+    model.analysis_plot()
