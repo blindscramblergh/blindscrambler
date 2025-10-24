@@ -16,7 +16,7 @@ from torcheval.metrics import R2Score
 import polars
 from sklearn.model_selection import train_test_split
 
-# add a linear Regression class:
+# add a linear Regression class
 class LinearRegression:
     """
     A PyTorch-based Linear Regression implementation for one variable.
@@ -49,8 +49,6 @@ class LinearRegression:
         self.nsamples = None
         self.X_train = None
         self.y_train = None
-        self.X_test = None
-        self.y_test = None
 
         # to see if the instance is fitted or not
         self.fitted = False
@@ -151,24 +149,22 @@ class LinearRegression:
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
-        Make predictions on the new/unseen data
-
-        Params:
-            - feature vector X for the test set.
+        Make predictions on new data.
+        
+        Args:
+            X: Input features of shape (n_samples,)
+            
         Returns:
-            - predictions in a numpy array
+            Predictions as numpy array
         """
-
-        # making sure that the model is fitted lol
         if not self.fitted:
             raise ValueError("Model must be fitted before making predictions")
         
-        # make it a tensor
         X_tensor = torch.tensor(X, dtype=torch.float32)
-
+        
         with torch.no_grad():
             predictions = self.forward(X_tensor)
-
+        
         return predictions.numpy()
 
     
@@ -257,29 +253,191 @@ class LinearRegression:
             plt.close(fig)
         return fig, axs
     
+###################################################################################################
+
+# Now adding a Cauchy regression class
+class CauchyRegression:
+    """
+    A PyTorch-based Linear Regression implementation for one variable.
+    
+    Model: y = sum over: w_0 + w_i * x_i 
+    Loss: Mean Squared Error
+    
+    Features:
+    - Gradient-based optimization using PyTorch
+    """
+
+    def __init__(self, no_features: int, learning_rate: float = 0.01, max_epochs: int = 1000,
+                tolerance: float = 1e-6):
+        """
+        The Constructor function for LinearRegression Class
+
+        Params:
+            - learning rate, for the gradient descent algorithm
+            - maximum number of epochs 
+            - tolerance, to know if things have converged
+        """
+         
+        # class variables
+        self.no_features = no_features
+        self.learning_rate = learning_rate
+        self.max_epochs = max_epochs
+        self.tolerance = tolerance
+
+        # more class variables - related to splitting of data 
+        self.nsamples = None
+        self.X_train = None
+        self.y_train = None
+        self.X_test = None
+        self.y_test = None
+
+        # to see if the instance/object of this class is fitted or not
+        self.fitted = False
+        
+        # The weights
+        self.weights = nn.Parameter(torch.randn(no_features + 1, dtype=torch.float32, requires_grad=True)) # random weights in the start
+        # self.weights = nn.Parameter(torch.ones(no_features + 1, dtype=torch.float32, requires_grad=True)) # random weights in the start
+
+        # the loss and the optimizer
+        self.lossfunction = self.cauchy_loss    # Cauchy loss I defined below
+        self.optimizer = optim.SGD([self.weights], lr = self.learning_rate)   # Stochastic gradient descent 
+
+        # to get the loss at each step:
+        self.inter_loss = []
+
+    # TODO: The scatter plot b/w features and targets
+    def scatter_plot():
+        return 0
+
+    @staticmethod
+    def cauchy_loss(y_pred: torch.Tensor, y_true: torch.Tensor, c: float = 1.0) -> torch.Tensor:
+        """
+        Cauchy loss for PyTorch tensors. Returns mean loss over samples.
+        Loss = (c^2 / 2) * log(1 + ((y_true - y_pred) / c)^2)
+        """
+        # make sure to return torch tensor
+        c_t = torch.as_tensor(c, dtype=y_pred.dtype, device=y_pred.device)
+        return ((c_t ** 2) / 2.0) * torch.log1p(((y_true - y_pred) / c_t) ** 2).mean()
+    
+    def forward(self, X: torch.tensor) -> torch.tensor:
+        """
+        Forward function for to specify linear model and compute the response
+
+        Params:
+            - X: torch.tensor
+            the input vector of size (n_samples, )
+        Returns:
+            - self.w_1 * X + self.w_0
+    `       the output is linear model result
+        
+        """
+        # return their multiplication as follows:
+        return self.weights[0] + torch.matmul(self.weights[1:], X.T)
+    
+    def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> 'CauchyRegression':
+        """
+        The function where the training happens
+
+        Params:
+            - X, the training dataset of features 
+            - y, the training dataset of target
+        """
+
+        # convert to Pytorch tensors:
+        self.X_train = torch.tensor(X_train, dtype=torch.float32)
+        self.y_train = torch.tensor(y_train, dtype=torch.float32)
+        self.nsamples = len(X_train) # samples in the training set
+
+        # the training loop:
+        prev_loss = float('inf')
+
+        # clear loss history
+        self.inter_loss.clear()
+
+        for epoch in range(self.max_epochs):
+            # reset the gradients
+            self.optimizer.zero_grad()
+
+            # premature prediction
+            y_train_pred = self.forward(self.X_train)
+
+            # loss function
+            loss = self.lossfunction(y_train_pred, self.y_train)
+
+            # automatic gradient backward pass 
+            loss.backward()
+
+            # update model parameters
+            self.optimizer.step()
+
+            # get the current loss and save it 
+            current_loss = float(loss.detach().item())
+
+            # save intermediate loss 
+            self.inter_loss.append(current_loss)
+
+            if abs(prev_loss - current_loss) < self.tolerance:
+                print(f"Converged after {epoch + 1} epochs")
+                break
+
+            prev_loss = current_loss
+
+        self.fitted = True
+        return self
+    
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Make predictions on the new/unseen data
+
+        Params:
+            - feature vector X for the test set. Basically this would be X_test matrix
+        Returns:
+            - predictions in a numpy array
+        """
+
+        # making sure that the model is fitted lol
+        if not self.fitted:
+            raise ValueError("Model must be fitted before making predictions")
+        
+        # make it a tensor
+        X_tensor = torch.tensor(X, dtype=torch.float32)
+
+        with torch.no_grad():
+            predictions = self.forward(X_tensor)
+
+        return predictions.numpy()
+###################################################################################################
+
 if __name__ == "__main__":
 
-    # the path of the file
-    csv_path = "/Users/syedraza/Desktop/UAH/Classes/Fall2025/CPE586-MachineLearning/HWs/hw3/Hydropower.csv"
+    # get the path data 
+    csv_path = "/Users/syedraza/Desktop/UAH/Classes/Fall2025/CPE586-MachineLearning/CPE486586_FA25/Data/CombinedCyclePowerPlant/Folds5x2_pp.csv"
 
-    # read in the needed data
-    data_frame = polars.read_csv(csv_path)["BCR", "AnnualProduction"]
+    # read it in polars dataframe
+    data = polars.read_csv(csv_path)
 
-    # separate out features and targets
-    X = data_frame["BCR"]
-    y = data_frame["AnnualProduction"]
+    # separate out features and targets:
+    X = data["AT", "V", "AP", "RH"].to_numpy()
+    y = data["PE"].to_numpy()
 
-    # train test split this
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25)
+    # do the train test and split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.15, random_state=42)
 
-    # make a LinearRegression() instance
-    model = LinearRegression()
+    # make the model
+    model = CauchyRegression(no_features=4)
 
-    # .fit() takes test set as well because it has to calculate the R2 score
-    model.fit(X_train, y_train, X_test, y_test)
+    # fit the model
+    model.fit(X_train, y_train)
 
-    # make predictions
+    # print the weights
+    print("The loss at the end: ", model.inter_loss[-1])
+    print("\n")
+    print("The model weights are training: ", model.weights)
+
+    # make predictions:
     predictions = model.predict(X_test)
 
-    # make the required plots
-    model.analysis_plot()
+    # make some figures to see what is going on
+    plt.figure(figsize=(16, 8))
+    plt.scatter(y_test, predictions)
+    plt.show()
