@@ -10,7 +10,8 @@ import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
-from typing import Tuple, Optional
+import textwrap
+from typing import Optional
 import warnings
 from torcheval.metrics import R2Score 
 import polars
@@ -267,7 +268,7 @@ class CauchyRegression:
     - Gradient-based optimization using PyTorch
     """
 
-    def __init__(self, no_features: int, learning_rate: float = 0.01, max_epochs: int = 1000,
+    def __init__(self, no_features: int, labels: np.array, learning_rate: float = 0.01, max_epochs: int = 1000,
                 tolerance: float = 1e-6):
         """
         The Constructor function for LinearRegression Class
@@ -283,21 +284,19 @@ class CauchyRegression:
         self.learning_rate = learning_rate
         self.max_epochs = max_epochs
         self.tolerance = tolerance
+        self.labels = labels
 
         # more class variables - related to splitting of data 
         self.nsamples = None
         self.X_train = None
         self.y_train = None
-        self.X_test = None
-        self.y_test = None
 
         # to see if the instance/object of this class is fitted or not
         self.fitted = False
         
         # The weights
         self.weights = nn.Parameter(torch.randn(no_features + 1, dtype=torch.float32, requires_grad=True)) # random weights in the start
-        # self.weights = nn.Parameter(torch.ones(no_features + 1, dtype=torch.float32, requires_grad=True)) # random weights in the start
-
+        
         # the loss and the optimizer
         self.lossfunction = self.cauchy_loss    # Cauchy loss I defined below
         self.optimizer = optim.SGD([self.weights], lr = self.learning_rate)   # Stochastic gradient descent 
@@ -305,8 +304,32 @@ class CauchyRegression:
         # to get the loss at each step:
         self.inter_loss = []
 
-    # TODO: The scatter plot b/w features and targets
-    def scatter_plot():
+    # TODO: The scatter plot b/w features and target
+    def scatter_plot(self):
+        """
+        making a scatter plot of the features and target 
+        """
+
+        # 5x5 pairwise plot (4 features + target)
+        vars_combined = np.column_stack([self.X_train, self.y_train])  # shape (n_samples, 5)
+        n = vars_combined.shape[1]
+    
+        fig, axs = plt.subplots(n, n, figsize=(8, 8), sharex="col", sharey="row")
+        for i in range(n):
+            for j in range(n):
+                ax = axs[i, j]
+                ax.scatter(vars_combined[:, j], vars_combined[:, i], s=0.5, alpha=0.6)
+                xlabel = "\n".join(textwrap.wrap(self.labels[j], width=18))
+                ylabel = "\n".join(textwrap.wrap(self.labels[i], width=18))
+                ax.set_xlabel(xlabel, fontsize = 7, labelpad = 2)
+                ax.set_ylabel(ylabel, fontsize = 7, labelpad = 2)
+
+                ax.tick_params(axis="both", which="major", labelsize=7)
+    
+        fig.suptitle("Correlation plots of features and target", y=0.98)
+        plt.tight_layout()
+        plt.show()
+        
         return 0
 
     @staticmethod
@@ -328,7 +351,7 @@ class CauchyRegression:
             the input vector of size (n_samples, )
         Returns:
             - self.w_1 * X + self.w_0
-    `       the output is linear model result
+            the output is linear model result
         
         """
         # return their multiplication as follows:
@@ -406,6 +429,35 @@ class CauchyRegression:
             predictions = self.forward(X_tensor)
 
         return predictions.numpy()
+    
+    def residual_plot(self, predictions: np.ndarray, y_test: np.ndarray, X_test: np.ndarray):
+        """
+        """
+
+        # residual plotting
+        residuals = []
+        for i in range(len(y_test)):
+            residuals.append(predictions[i] - y_test[i])
+
+        # prepare subplots
+        fig, axs = plt.subplots(self.no_features, 1, figsize=(8, 3 * self.no_features), sharex=False)
+        if self.no_features == 1:
+            axs = np.array([axs])
+
+        for i in range(self.no_features):
+            ax = axs[i]
+            ax.scatter(X_test[:, i], residuals, s=12, alpha=0.7)
+            ax.axhline(0.0, color="k", linestyle="--", linewidth=0.8)
+            label = self.labels[i] if hasattr(self, "labels") and i < len(self.labels) else f"feat{i}"
+            ax.set_title(f"Residuals vs {label}")
+            ax.set_xlabel(label)
+            ax.set_ylabel("Residual (pred - true)")
+            ax.grid(True, alpha=0.2)
+
+        fig.suptitle("Residual plots", y=0.95)
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+        plt.show()
+
 ###################################################################################################
 
 if __name__ == "__main__":
@@ -417,6 +469,9 @@ if __name__ == "__main__":
     data = polars.read_csv(csv_path)
 
     # separate out features and targets:
+    labels = np.array(["Ambient Temperature (AT)", "Exhaust Vaccum (V)", 
+                       "Ambient Pressure (AP)", "Relative Humidity(RH)", 
+                       "Power Output(PE)"])
     X = data["AT", "V", "AP", "RH"].to_numpy()
     y = data["PE"].to_numpy()
 
@@ -424,10 +479,13 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.15, random_state=42)
 
     # make the model
-    model = CauchyRegression(no_features=4)
+    model = CauchyRegression(no_features=4, labels=labels)
 
     # fit the model
     model.fit(X_train, y_train)
+
+    # make the plots
+    model.scatter_plot()
 
     # print the weights
     print("The loss at the end: ", model.inter_loss[-1])
@@ -437,7 +495,5 @@ if __name__ == "__main__":
     # make predictions:
     predictions = model.predict(X_test)
 
-    # make some figures to see what is going on
-    plt.figure(figsize=(16, 8))
-    plt.scatter(y_test, predictions)
-    plt.show()
+    # residual plotting
+    model.residual_plot(predictions, y_test, X_test)
