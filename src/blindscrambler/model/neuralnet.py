@@ -33,6 +33,8 @@ class TorchNet(torch.nn.Module):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.lr = lr
+
+        self.scaler = None
         
         # first hidden layer: 
         self.W1 = torch.nn.Parameter(torch.randn(input_dim, 4) * 0.01)
@@ -46,9 +48,18 @@ class TorchNet(torch.nn.Module):
         self.W3 = torch.nn.Parameter(torch.randn(3, output_dim) * 0.01)
         self.b3 = torch.nn.Parameter(torch.zeros(output_dim))
 
-    def standard_scale(self, X):
-        scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)
+    def standard_scale(self, X, fit=True):
+        """
+        Scale input X using StandardScaler. If fit=True (default) a new scaler
+        is fit and stored on the model; otherwise the stored scaler is used.
+        X can be numpy array / list-like shaped (n_samples, n_features).
+        Returns a torch.float32 tensor.
+        """
+        if fit or self.scaler is None:
+            self.scaler = StandardScaler()
+            X_scaled = self.scaler.fit_transform(X)
+        else:
+            X_scaled = self.scaler.transform(X)
         return torch.tensor(X_scaled, dtype=torch.float32)
 
     def relu(self, x):
@@ -127,6 +138,42 @@ class TorchNet(torch.nn.Module):
             self.W3.grad.zero_()
             self.b3.grad.zero_()
 
+    def predict(self, sample, threshold=0.5):
+        """
+        Predict probability and binary label for a single sample or batch.
+        - sample: 1D list/array (n_features,) or 2D (n_samples, n_features)
+        Returns (probability, label) for single sample or list of tuples for batch.
+        """
+        self.eval()
+        with torch.no_grad():
+            import numpy as _np
+            arr = _np.asarray(sample)
+            # determine whether the input represents a single sample
+            single_input = (arr.ndim == 1) or (arr.ndim == 2 and arr.shape[0] == 1)
+            if arr.ndim == 1:
+                arr = arr.reshape(1, -1)
+
+            X_tensor = self.standard_scale(arr, fit=False)
+            logits = self.forward(X_tensor)
+            probs = torch.sigmoid(logits).squeeze(dim=-1)
+
+            # If single input was provided, return a single (prob, label) tuple
+            if single_input:
+                # probs may be a scalar tensor or 1-d tensor with one element
+                if isinstance(probs, torch.Tensor):
+                    prob_val = probs.item() if probs.dim() == 0 else probs.squeeze().item()
+                else:
+                    prob_val = float(probs)
+                label = 1 if prob_val >= threshold else 0
+                return prob_val, label
+
+            # Otherwise return list of (prob, label) tuples for the batch
+            results = []
+            for p in probs.tolist():
+                label = 1 if p >= threshold else 0
+                results.append((p, label))
+            return results
+
 
 if __name__ == "__main__":
     # get the diabetes data set:
@@ -149,6 +196,7 @@ if __name__ == "__main__":
     # train the model
     model.train_model(X_tensor, y_tensor, epochs=1000)
 
-    # after training, save the model in onnx format in the hw directory:
-    dummy_input = torch.randn(1, no_features)
-    torch.onnx.export(model, dummy_input, "/Users/syedraza/Desktop/UAH/Classes/Fall2025/CPE586-MachineLearning/HWs/hw5/torch_model.onnx")
+    # make a prediction for the sample from your image:
+    sample = [7, 149, 73, 94, 94, 32, 0.672, 45]  # Pregnancies,Glucose,BP,Skin,Insulin,BMI,DPF,Age
+    prob, label = model.predict(sample)
+    print(f"Predicted probability: {prob:.4f}, label: {label}")
