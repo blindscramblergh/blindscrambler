@@ -28,7 +28,7 @@ def forward_pass(X: torch.tensor, W1: torch.tensor, W2: torch.tensor, W3: torch.
     # now simply return A2
     return A2
 
-def binary_classification(d: int, n:int, epochs: int = 10000, lr: float = 0.001):
+def binary_classification(d: int, n: int, epochs: int = 10000, lr: float = 0.001):
     """
     Performs binary classification using a two-layer neural network
     Params: d - no of features
@@ -62,6 +62,12 @@ def binary_classification(d: int, n:int, epochs: int = 10000, lr: float = 0.001)
     # ready to perform the training using SGD provided by torch
     losses = []
 
+    # store the weights as well as losses over epochs. I want to store each of the separately
+    weights_1 = torch.zeros(epochs, d, 48)
+    weights_2 = torch.zeros(epochs, 48, 16)
+    weights_3 = torch.zeros(epochs, 16, 32)
+    weights_4 = torch.zeros(epochs, 32, 1)
+
     for epoch in range(epochs):
         # do the forward pass and get the loss
         y_hat = forward_pass(X, W1, W2, W3, W4)
@@ -86,12 +92,18 @@ def binary_classification(d: int, n:int, epochs: int = 10000, lr: float = 0.001)
         # store the loss
         losses.append(loss.item())
 
+        # store the intermediate weights
+        weights_1[epoch, :] = W1.clone()
+        weights_2[epoch, :] = W2.clone()
+        weights_3[epoch, :] = W3.clone()
+        weights_4[epoch, :] = W4.clone()
+
         # to print some results here and there
         if epoch % 200 == 0:
             print(f'Epoch {epoch}, Loss: {loss.item():.4f}')
      
     # return the weight matrices and the losses
-    return [W1, W2, W3, W4, losses]
+    return [weights_1, weights_2, weights_3, weights_4, losses]
 
 if __name__ == "__main__":
 
@@ -101,7 +113,11 @@ if __name__ == "__main__":
 
     # setting the size for the no of features and samples
     n = 500
-    d = 20
+    d = 5
 
     # call the function here
-    binary_classification(d, n)
+    weights = binary_classification(d, n)[0]
+    print(weights.shape)
+    print("\n")
+    print(weights[0:3])
+    
