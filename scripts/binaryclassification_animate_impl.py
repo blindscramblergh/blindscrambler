@@ -7,6 +7,8 @@ from datetime import datetime
 from blindscrambler.deepl.two_layer_binary_classification import binary_classification
 import blindscrambler.animation.largewt_animation as animation 
 
+plot = False
+
 # a helper function for the plots
 def loss_plot(loss: list, show: bool = False, save: bool = True):
     """
@@ -35,29 +37,26 @@ if __name__ == "__main__":
     print(f'Using device: {device}')
 
     # setting the size for the no of features and samples
-    n = 20
-    d = 400
+    n = 200
+    d = 40000
 
     # call the binary classification, and make weights animation
     # last index provides the loss vector - the others are weight matrices 
     result = binary_classification(d, n, epochs=5000, lr=0.01)
-    weights_1 = result[0]
-    weights_2 = result[1]
-    weights_3 = result[2]
-    weights_4 = result[3]
+    weights = result[0:4]
     loss_vector = result[4]
 
     # plot the loss history
-    loss_plot(loss_vector)
+    if plot == True:
+        loss_plot(loss_vector)
 
-    # checkpoint for sanity
-    print(weights_1.shape)
 
-    """
-    print("Starting render...")
-    animation.animate_large_heatmap(
-        weights_1, 
-        dt=0.04,
-        file_name="weight_1_evolution",
-        title_str="Weight Evolution"
-    )"""
+    print("Starting render for all the weights...")
+
+    for i in range(4):
+        animation.animate_large_heatmap(
+            weights[i], 
+            dt=0.04,
+            file_name=f"weight_{i + 1}_evolution",
+            title_str="Weight Evolution"
+        )
