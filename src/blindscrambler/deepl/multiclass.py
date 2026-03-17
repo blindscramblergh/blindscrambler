@@ -3,6 +3,12 @@ from torch import nn
 import torch
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score, ConfusionMatrixDisplay
+from datasets import load_dataset
+from datasets import load_from_disk
+from torchvision import transforms
+import sys
+from torch.utils.data import DataLoader
+import subprocess
 
 class SimpleNN(nn.Module):
     def __init__(self, in_features, num_classes):
@@ -265,19 +271,456 @@ class ClassTrainer(nn.Module):
         plt.tight_layout()
         plt.show()
 
+
+#####################################################################################################################
+
+# THINGS FOR HW# START HERE 
+
+# the custom composite layer called ConvLayer
+class Conv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=1, bias=True):
+        super(Conv2d, self).__init__()
+        
+        # Store hyperparameters
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        self.stride = stride if isinstance(stride, tuple) else (stride, stride)
+        self.padding = padding if isinstance(padding, tuple) else (padding, padding)
+        
+        # Initialize learnable parameters
+        self.weight = nn.Parameter(torch.randn(out_channels, in_channels, *self.kernel_size))
+        if bias:
+            self.bias = nn.Parameter(torch.zeros(out_channels))
+        else:
+            self.register_parameter('bias', None)
+        
+        # Initialize weights properly
+        self.reset_parameters()
+    
+    def reset_parameters(self):
+        # Kaiming initialization
+        nn.init.kaiming_uniform_(self.weight, a=torch.nn.init.calculate_gain('relu'))
+        if self.bias is not None:
+            nn.init.zeros_(self.bias)
+    
+    def forward(self, x):
+        # Use PyTorch's built-in conv2d function
+        return F.conv2d(x, self.weight, self.bias, self.stride, self.padding)
+
+
+# CNN ARCHITECTURE
+class ImageNetCNN(nn.Module):
+    def __init__(self):
+        super(ImageNetCNN, self).__init__()
+
+        # get the ReLU, and pooling here since it will be the same for all the Blocks 
+        self.relu = nn.ReLU()
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+        
+        #---------------------------------- Block 1 ----------------------------------#
+
+        # first convolutional layer
+        self.conv1 = nn.Conv2d(3, 64, kernel_size = 3)
+        # batch normalizatiopn and RELU activation after first convolutional layer
+        self.bn1 = nn.BatchNorm2d(64)
+
+        #---------------------------------- Block 2 ----------------------------------#
+
+        # second convolutional layer 
+        self.conv2 = nn.Conv2d(64, 128, kernel_size = 3)
+        # batch normalization and RELU again
+        self.bn2 = nn.BatchNorm2d(128)
+
+        #---------------------------------- Block 3 ----------------------------------#
+
+        # third convolutional layer
+        self.conv3 = nn.Conv2d(128, 256, kernel_size = 3)
+        # batch normalization again
+        self.bn3 = nn.BatchNorm2d(256)
+
+        #---------------------------------- Block 4 ----------------------------------#
+
+        # fourth convolutional layer    
+        self.conv4 = nn.Conv2d(256, 512, kernel_size = 3)
+        # batch normalization again
+        self.bn4 = nn.BatchNorm2d(512)
+
+        #---------------------------------- Block 5 ----------------------------------#
+
+        # fifth convolutional layer
+        self.conv5 = nn.Conv2d(512, 512, kernel_size = 3)
+        # batch normalization again
+        self.bn5 = nn.BatchNorm2d(512)
+        
+        #-------------------------- Global Pool and Flatten --------------------------#
+
+        # global average pooling layer and flatten layer
+        self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
+        self.flatten = nn.Flatten()
+
+        #----------------------------- Fully connected 1 -----------------------------#
+
+        # fully connected layer 1
+        self.fc1 = nn.Linear(512, 1024)
+        # relu and dropout
+        self.dropout = nn.Dropout(0.5)
+
+        #----------------------------- Fully connected 2 -----------------------------#
+
+        # fully connected layer 2, the output layer with 1000 classes, and softmax activation
+        self.fc2 = nn.Linear(1024, 1000)
+        self.softmax = nn.Softmax(dim=1)
+        
+
+    def forward(self, x):
+        x = self.maxpool(self.relu(self.bn1(self.conv1(x))))                # apply block 1: conv1 -> BN -> relu -> maxpool
+        x = self.maxpool(self.relu(self.bn2(self.conv2(x))))                # apply block 2: conv2 -> BN -> relu -> maxpool
+        x = self.maxpool(self.relu(self.bn3(self.conv3(x))))                # apply block 3: conv3 -> BN -> relu -> maxpool
+        x = self.maxpool(self.relu(self.bn4(self.conv4(x))))                # apply block 4: conv4 -> BN -> relu -> maxpool
+        x = self.maxpool(self.relu(self.bn5(self.conv5(x))))                # apply block 3: conv4 -> BN -> relu -> maxpool
+        x = self.flatten(self.global_avg_pool(x))                           # apply the flobal pool and flatten
+        x = self.dropout(self.relu(self.fc1(x)))                            # apply fully connected layer 1
+        x = self.softmax(self.fc2(x))                                       # apply fully connected layer 2
+
+        return x
+
+# next step is how to train the CNN architecture:
+class CNNTrainer(nn.Module):
+
+    # the initializer function
+    def __init__(self, train_dataloader, val_dataloader, eta, epoch, loss_function, 
+                optimizer, loss_vector, accuracy_vector, model, device, scheduler):
+        super().__init__()
+        # the class variables or attributes
+        self.train_dataloader = train_dataloader
+        self.val_dataloader = val_dataloader
+        self.eta = eta 
+        self.epoch = epoch
+        self.loss_function = loss_function
+        self.optimizer = optimizer
+        self.loss_vector = loss_vector 
+        self.accuracy_vector = accuracy_vector
+        self.model = model
+        self.device = device 
+        self.scheduler = scheduler
+
+    # the training function
+    def train(self):
+        """
+        This class is to train the CNN architecture. This is cool because you can train many CNN
+        architectures based on this training class.
+        """
+
+        # move the model to device 
+        self.model = self.model.to(self.device)
+
+        # Training loop
+        for epoch in range(self.epoch):
+            self.model.train()
+            epoch_loss = 0.0
+            epoch_correct = 0
+            epoch_total = 0
+
+            # Iterate through batches from the DataLoader
+            for batch_idx, (X_batch, y_batch) in enumerate(self.train_dataloader):
+                # move the data to device 
+                X_batch = X_batch.to(self.device)
+                y_batch = y_batch.to(self.device)
+
+                # zero the gradients 
+                self.optimizer.zero_grad()
+
+                # forward pass
+                outputs = self.model(X_batch)
+
+                # compute the loss
+                loss = self.loss_function(outputs, y_batch)
+
+                # backwards pass and optimization
+                loss.backward()
+                self.optimizer.step()
+
+                # calculate the accuracy
+                _, predicted = torch.max(outputs.data, 1)
+                correct = (predicted == y_batch).sum().item()
+                
+                # accumulate epoch statistics
+                epoch_loss += loss.item()
+                epoch_correct += correct
+                epoch_total += y_batch.size(0)
+                
+                # Print progress every 10 batches with validation accuracy
+                if (batch_idx + 1) % 10 == 0:
+                    # Calculate training accuracy for this batch
+                    batch_train_accuracy = correct / y_batch.size(0)
+                    
+                    # Calculate validation accuracy
+                    self.model.eval()
+                    val_correct = 0
+                    val_total = 0
+                    with torch.no_grad():
+                        for val_X, val_y in self.val_dataloader:
+                            val_X = val_X.to(self.device)
+                            val_y = val_y.to(self.device)
+                            val_outputs = self.model(val_X)
+                            _, val_pred = torch.max(val_outputs.data, 1)
+                            val_correct += (val_pred == val_y).sum().item()
+                            val_total += val_y.size(0)
+                    val_accuracy = val_correct / val_total
+                    self.model.train()
+                    
+                    # Print loss, training accuracy, and validation accuracy
+                    print(f'Epoch [{epoch + 1}/{self.epoch}], Batch [{batch_idx + 1}/{len(self.train_dataloader)}], Loss: {loss.item():.4f}, Train Acc: {batch_train_accuracy:.4f}, Val Acc: {val_accuracy:.4f}')
+
+            # Calculate average loss and accuracy for the epoch
+            avg_loss = epoch_loss / len(self.train_dataloader)
+            avg_accuracy = epoch_correct / epoch_total
+            
+            # Store loss and accuracy
+            self.loss_vector.append(avg_loss)
+            self.accuracy_vector.append(avg_accuracy)
+
+            # make the scheduler step
+            self.scheduler.step()
+
+    def test(self):
+        """
+        Evaluate the model on validation data
+        
+        Returns:
+            tuple: (test_loss, test_accuracy)
+        """
+
+        # set model to evaluation mode
+        self.model.eval()
+        
+        test_loss = 0.0
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+            for X_batch, y_batch in self.val_dataloader:
+                # move test data to the device 
+                X_batch = X_batch.to(self.device)
+                y_batch = y_batch.to(self.device)
+
+                # Forward pass
+                outputs = self.model(X_batch)
+                
+                # compute loss
+                loss = self.loss_function(outputs, y_batch)
+                test_loss += loss.item()
+
+                # compute accuracy
+                _, predicted = torch.max(outputs.data, 1)
+                correct += (predicted == y_batch).sum().item()
+                total += y_batch.size(0)
+        
+        avg_test_loss = test_loss / len(self.val_dataloader)
+        test_accuracy = correct / total
+        
+        print(f'Validation Loss: {avg_test_loss:.4f}, Validation Accuracy: {test_accuracy:.4f}')
+        
+        return avg_test_loss, test_accuracy
+
+    def predict(self, X):
+        """
+        Makes predictions on new data using the trained model
+        
+        Args:
+            X: Input tensor or DataLoader
+            
+        Returns:
+            predictions: Predicted class labels
+        """
+        # set model to evaluation mode
+        self.model.eval()
+
+        if isinstance(X, DataLoader):
+            # If X is a DataLoader, iterate through batches
+            all_predictions = []
+            with torch.no_grad():
+                for X_batch, _ in X:
+                    X_batch = X_batch.to(self.device)
+                    outputs = self.model(X_batch)
+                    _, predicted = torch.max(outputs.data, 1)
+                    all_predictions.append(predicted.cpu())
+            return torch.cat(all_predictions, dim=0)
+        else:
+            # If X is a tensor
+            X = X.to(self.device)
+            with torch.no_grad():
+                outputs = self.model(X)
+                _, predicted = torch.max(outputs.data, 1)
+            return predicted
+
+    def save_onnx(self, file_path):
+        """
+        Saves the trained model in ONNX format.
+        
+        Args:
+            file_path (str): Path where the ONNX model will be saved
+            
+        Raises:
+            RuntimeError: If the model has not been trained yet
+        """
+        # Check if model has been trained
+        if not self.loss_vector or len(self.loss_vector) == 0:
+            raise RuntimeError("Model has not been trained yet. Please train the model before saving.")
+        
+        # Set model to evaluation mode
+        self.model.eval()
+        
+        # Create a dummy input with the correct shape (batch_size=1, channels=3, height=224, width=224)
+        dummy_input = torch.randn(1, 3, 224, 224, device=self.device)
+        
+        # Export the model to ONNX format
+        torch.onnx.export(
+            self.model,                          # Model to export
+            dummy_input,                         # Model input
+            file_path,                           # Output file path
+            export_params=True,                  # Store trained parameters
+            opset_version=11,                    # ONNX opset version
+            do_constant_folding=True,            # Optimize constant folding
+            input_names=['input'],               # Input tensor name
+            output_names=['output'],             # Output tensor name
+            dynamic_axes={                       # Allow dynamic batch size
+                'input': {0: 'batch_size'},
+                'output': {0: 'batch_size'}
+            }
+        )
+        
+        print(f'Model saved to {file_path}')
+
+
 if __name__ == "__main__":
-    # get the data path
-    data_path = "../../../scripts/data/Android_Malware.csv"
 
-    # read it using polars library:
-    df = pd.read_csv(data_path, low_memory=False)
+    # pick the device to be used, use GPU if available, otherwise use CPU
+    device_id = get_best_gpu(strategy="utilization")
+    device = torch.device(f"cuda:{device_id}")
+    print(f"Selected GPU: {device_id}")
 
-    # make all the columns have no empty spaces ahead or back
-    df.columns = df.columns.str.strip()
+    # Load dataset
+    dataset = load_from_disk("/data/CPE_487-587/imagenet-1k-arrow")
 
+    train_dataset = dataset["train"]
+    val_dataset = dataset["validation"]
+    num_classes = len(train_dataset.features["label"].names)
+    print(f"Number of classes: {num_classes}")
 
-    # delete the columns that are note important
-    df = df.drop(columns=["Flow ID", "Source IP", "Source Port", "Destination IP", "Destination Port", "Protocol", "Timestamp"])
+    # select subset for training and testing
+    train_size = int(len(dataset["train"]) * 0.005)      
+    val_size = int(len(dataset["validation"]) * 0.0008)
+    
+    train_dataset = dataset["train"].select(range(train_size))
+    val_dataset = dataset["validation"].select(range(val_size))
 
-    # print statement
-    print("Columns afterclaening the data: ", df.columns)
+    class_names = train_dataset.features["label"].names
+
+    # in order to display a sample image - uncomment this code snippet to look at an example figure
+    """
+    first_example = train_dataset[55]
+    image = first_example["image"]
+    label_id = first_example["label"]
+
+    full_label = class_names[label_id]
+    primary_name = full_label.split(',')[0].strip()
+
+    plt.figure(figsize=(8, 8))
+    plt.imshow(image)
+    plt.title(f"ID {label_id}: {primary_name}\n({full_label})", fontsize=10)
+    plt.axis("off")
+    plt.savefig("sample_image.png")
+    """
+
+    # Transforming train and val images 
+    train_transform = transforms.Compose([
+        transforms.RandomResizedCrop(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        ])
+
+    val_transform = transforms.Compose({
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    })
+
+    # apply transforms
+    def preprocess_train(example):
+        images = [train_transform(img.convert("RGB")) for img in example["image"]]
+        labels = example["label"]
+
+        return {
+            "pixel_values": images,
+            "labels": labels
+        }
+
+    def preprocess_val(example):
+        images = [val_transform(img.convert("RGB")) for img in example["image"]]
+        labels = example["label"]
+
+        return {
+            "pixel_values": images,
+            "labels": labels
+        }
+
+    train_dataset = train_dataset.with_transform(preprocess_train)
+    val_dataset = val_dataset.with_transform(preprocess_val)
+
+    # the next step would be to create Data loaders
+    def collate_fn(batch):
+        """
+        To extract pixel values and labels from each item.
+        Returns a tuple of (images, labels) for compatibility with CNNTrainer
+        """
+
+        pixel_values = torch.stack([item["pixel_values"] for item in batch])
+        labels = torch.tensor([item["labels"] for item in batch])
+
+        return pixel_values, labels
+
+    # create data loaders with pin_memory only if GPU is available
+    pin_memory = torch.cuda.is_available()
+    
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=128,
+        shuffle=True,
+        pin_memory=pin_memory,    # for faster GPU transfer
+        collate_fn=collate_fn
+    )
+
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=128,
+        shuffle=False,
+        pin_memory=pin_memory,
+        collate_fn=collate_fn
+    )
+
+    # Initialize model and trainer
+    model = ImageNetCNN()
+    trainer = CNNTrainer(
+        train_dataloader=train_loader,
+        eta=0.001,
+        epoch=50,
+        loss_function=nn.CrossEntropyLoss(),
+        optimizer=torch.optim.Adam(model.parameters(), lr=0.001),
+        loss_vector=[],
+        accuracy_vector=[],
+        model=model,
+        device=device,
+        val_dataloader=val_loader
+    )
+     
+    # Train the model
+    trainer.train()
+     
+    # Evaluate on validation set
+    val_loss, val_accuracy = trainer.test()
+
+    print(f"Validation loss: {val_loss}")
