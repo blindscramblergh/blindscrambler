@@ -1,0 +1,4 @@
+Selected GPU: 0
+Number of classes: 1000
+Training with 50 epochs, train_ratio=0.0001, val_ratio=5e-05
+Train size: 128, Validation size: 2

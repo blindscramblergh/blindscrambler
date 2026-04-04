@@ -7,9 +7,9 @@
 cd "$(dirname "$0")/.." || exit 1
 
 # Define training parameters
-EPOCHS=10000
-TRAIN_RATIO=0.10
-VAL_RATIO=0.02
+EPOCHS=10
+TRAIN_RATIO=0.008
+VAL_RATIO=0.004
 
 # Create logs directory if it doesn't exist
 mkdir -p logs
@@ -27,7 +27,7 @@ echo "  Log file: $LOG_FILE"
 echo ""
 
 # Run the training in the background with nohup
-nohup python imagenet_impl.py \
+nohup python -u imagenet_impl.py \
     --epochs $EPOCHS \
     --train_ratio $TRAIN_RATIO \
     --val_ratio $VAL_RATIO \

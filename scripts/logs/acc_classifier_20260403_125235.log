@@ -1,0 +1,20 @@
+Starting ACC Classifier Training at Fri Apr  3 12:52:35 PM CDT 2026
+Epochs: 2
+Process ID: 420798
+Script PID: 420798
+======================================================
+Python Process PID: 420804
+Selected GPU: 2
+Oh, look at me I am implementing acc classifier
+Training with 2 epochs
+loading the already saved data from /home/sar0033/blindscrambler/scripts/data/ACC_processed_data.csv
+Dataset shape: (9066586, 11), Label shape: (9066586,)
+Class distribution: [5748608 3317978]
+Features normalized - Train mean: -0.0000, std: 1.0000
+Train batches: 198332, Val batches: 42500, Test batches: 42500
+Using device: cuda:2
+
+Starting training...
+Epoch [1/2], Batch [2000/198332], Loss: -0.0545, Train Acc: 0.3937, Val Acc: 0.3968
+Epoch [1/2], Batch [4000/198332], Loss: -0.1278, Train Acc: 0.5076, Val Acc: 0.7781
+Epoch [1/2], Batch [6000/198332], Loss: -0.1736, Train Acc: 0.5256, Val Acc: 0.6365

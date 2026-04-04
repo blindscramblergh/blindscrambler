@@ -364,13 +364,12 @@ class ImageNetCNN(nn.Module):
         # fully connected layer 1
         self.fc1 = nn.Linear(512, 1024)
         # relu and dropout
-        self.dropout = nn.Dropout(0.5)
+        self.dropout = nn.Dropout(0.2)
 
         #----------------------------- Fully connected 2 -----------------------------#
 
         # fully connected layer 2, the output layer with 1000 classes, and softmax activation
         self.fc2 = nn.Linear(1024, 1000)
-        self.softmax = nn.Softmax(dim=1)
         
 
     def forward(self, x):
@@ -381,9 +380,10 @@ class ImageNetCNN(nn.Module):
         x = self.maxpool(self.relu(self.bn5(self.conv5(x))))                # apply block 3: conv4 -> BN -> relu -> maxpool
         x = self.flatten(self.global_avg_pool(x))                           # apply the flobal pool and flatten
         x = self.dropout(self.relu(self.fc1(x)))                            # apply fully connected layer 1
-        x = self.softmax(self.fc2(x))                                       # apply fully connected layer 2
+        x = self.fc2(x)                                                     # apply fully connected layer 2
 
         return x
+    
 
 # next step is how to train the CNN architecture:
 class CNNTrainer(nn.Module):
@@ -404,6 +404,47 @@ class CNNTrainer(nn.Module):
         self.model = model
         self.device = device 
         self.scheduler = scheduler
+
+    def save_onnx(self, file_path="/home/sar0033/blindscrambler/scripts/models"):
+        """
+        Saves the trained model in ONNX format.
+        
+        Args:
+            file_path (str): Path where the ONNX model will be saved
+            
+        Raises:
+            RuntimeError: If the model has not been trained yet
+        """
+        # Check if model has been trained
+        if not self.loss_vector or len(self.loss_vector) == 0:
+            raise RuntimeError("Model has not been trained yet. Please train the model before saving.")
+        
+        # Set model to evaluation mode
+        self.model.eval()
+        
+        # Create a dummy input with the correct shape (batch_size=1, channels=3, height=224, width=224)
+        dummy_input = torch.randn(1, 3, 224, 224, device=self.device)
+
+        # output file path 
+        output_path = os.path.join(file_path, f"models_CNN_epoch_{self.epoch}.onnx") # Removes .onnx and re-adds with epoch
+
+        # Export the model to ONNX format
+        torch.onnx.export(
+            self.model,                          # Model to export
+            dummy_input,                         # Model input
+            output_path,                         # Output file path
+            export_params=True,                  # Store trained parameters
+            opset_version=11,                    # ONNX opset version
+            do_constant_folding=True,            # Optimize constant folding
+            input_names=['input'],               # Input tensor name
+            output_names=['output'],             # Output tensor name
+            dynamic_axes={                       # Allow dynamic batch size
+                'input': {0: 'batch_size'},
+                'output': {0: 'batch_size'}
+            }
+        )
+        
+        print(f'Model saved to {file_path}')
 
     # the training function
     def train(self):
@@ -472,7 +513,7 @@ class CNNTrainer(nn.Module):
                     
                     # Print loss, training accuracy, and validation accuracy
                     print(f'Epoch [{epoch + 1}/{self.epoch}], Batch [{batch_idx + 1}/{len(self.train_dataloader)}], Loss: {loss.item():.4f}, Train Acc: {batch_train_accuracy:.4f}, Val Acc: {val_accuracy:.4f}')
-
+            
             # Calculate average loss and accuracy for the epoch
             avg_loss = epoch_loss / len(self.train_dataloader)
             avg_accuracy = epoch_correct / epoch_total
@@ -481,12 +522,15 @@ class CNNTrainer(nn.Module):
             self.loss_vector.append(avg_loss)
             self.accuracy_vector.append(avg_accuracy)
 
-            # make the scheduler step
+            # make the scheduler step: adaptive step for gradients
             self.scheduler.step()
 
-    def test(self):
+    def test(self, test_data):
         """
         Evaluate the model on validation data
+
+        Params: 
+            test_data: Anywhere in the window of (1, 10) images
         
         Returns:
             tuple: (test_loss, test_accuracy)
@@ -500,27 +544,27 @@ class CNNTrainer(nn.Module):
         total = 0
 
         with torch.no_grad():
-            for X_batch, y_batch in self.val_dataloader:
-                # move test data to the device 
-                X_batch = X_batch.to(self.device)
-                y_batch = y_batch.to(self.device)
+            for image, label in test_data:
+                # move the image to the device
+                image = image.to(self.device)
+                label = label.to(self.device)
 
-                # Forward pass
-                outputs = self.model(X_batch)
-                
-                # compute loss
-                loss = self.loss_function(outputs, y_batch)
+                # forward pass:
+                output = self.model(image)
+
+                # compute the loss
+                loss = self.loss_function(output, label)
                 test_loss += loss.item()
 
-                # compute accuracy
-                _, predicted = torch.max(outputs.data, 1)
-                correct += (predicted == y_batch).sum().item()
-                total += y_batch.size(0)
+                # compute the accuracy
+                _, predicted = torch.max(output.data, 1)
+                correct += (predicted == label).sum().item()
+                total += label.size(0)
         
-        avg_test_loss = test_loss / len(self.val_dataloader)
+        avg_test_loss = test_loss / len(test_data)
         test_accuracy = correct / total
         
-        print(f'Validation Loss: {avg_test_loss:.4f}, Validation Accuracy: {test_accuracy:.4f}')
+        print(f'Test Loss: {avg_test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}')
         
         return avg_test_loss, test_accuracy
 
@@ -555,172 +599,4 @@ class CNNTrainer(nn.Module):
                 _, predicted = torch.max(outputs.data, 1)
             return predicted
 
-    def save_onnx(self, file_path):
-        """
-        Saves the trained model in ONNX format.
-        
-        Args:
-            file_path (str): Path where the ONNX model will be saved
-            
-        Raises:
-            RuntimeError: If the model has not been trained yet
-        """
-        # Check if model has been trained
-        if not self.loss_vector or len(self.loss_vector) == 0:
-            raise RuntimeError("Model has not been trained yet. Please train the model before saving.")
-        
-        # Set model to evaluation mode
-        self.model.eval()
-        
-        # Create a dummy input with the correct shape (batch_size=1, channels=3, height=224, width=224)
-        dummy_input = torch.randn(1, 3, 224, 224, device=self.device)
-        
-        # Export the model to ONNX format
-        torch.onnx.export(
-            self.model,                          # Model to export
-            dummy_input,                         # Model input
-            file_path,                           # Output file path
-            export_params=True,                  # Store trained parameters
-            opset_version=11,                    # ONNX opset version
-            do_constant_folding=True,            # Optimize constant folding
-            input_names=['input'],               # Input tensor name
-            output_names=['output'],             # Output tensor name
-            dynamic_axes={                       # Allow dynamic batch size
-                'input': {0: 'batch_size'},
-                'output': {0: 'batch_size'}
-            }
-        )
-        
-        print(f'Model saved to {file_path}')
-
-
-if __name__ == "__main__":
-
-    # pick the device to be used, use GPU if available, otherwise use CPU
-    device_id = get_best_gpu(strategy="utilization")
-    device = torch.device(f"cuda:{device_id}")
-    print(f"Selected GPU: {device_id}")
-
-    # Load dataset
-    dataset = load_from_disk("/data/CPE_487-587/imagenet-1k-arrow")
-
-    train_dataset = dataset["train"]
-    val_dataset = dataset["validation"]
-    num_classes = len(train_dataset.features["label"].names)
-    print(f"Number of classes: {num_classes}")
-
-    # select subset for training and testing
-    train_size = int(len(dataset["train"]) * 0.005)      
-    val_size = int(len(dataset["validation"]) * 0.0008)
-    
-    train_dataset = dataset["train"].select(range(train_size))
-    val_dataset = dataset["validation"].select(range(val_size))
-
-    class_names = train_dataset.features["label"].names
-
-    # in order to display a sample image - uncomment this code snippet to look at an example figure
-    """
-    first_example = train_dataset[55]
-    image = first_example["image"]
-    label_id = first_example["label"]
-
-    full_label = class_names[label_id]
-    primary_name = full_label.split(',')[0].strip()
-
-    plt.figure(figsize=(8, 8))
-    plt.imshow(image)
-    plt.title(f"ID {label_id}: {primary_name}\n({full_label})", fontsize=10)
-    plt.axis("off")
-    plt.savefig("sample_image.png")
-    """
-
-    # Transforming train and val images 
-    train_transform = transforms.Compose([
-        transforms.RandomResizedCrop(224),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-        ])
-
-    val_transform = transforms.Compose({
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-    })
-
-    # apply transforms
-    def preprocess_train(example):
-        images = [train_transform(img.convert("RGB")) for img in example["image"]]
-        labels = example["label"]
-
-        return {
-            "pixel_values": images,
-            "labels": labels
-        }
-
-    def preprocess_val(example):
-        images = [val_transform(img.convert("RGB")) for img in example["image"]]
-        labels = example["label"]
-
-        return {
-            "pixel_values": images,
-            "labels": labels
-        }
-
-    train_dataset = train_dataset.with_transform(preprocess_train)
-    val_dataset = val_dataset.with_transform(preprocess_val)
-
-    # the next step would be to create Data loaders
-    def collate_fn(batch):
-        """
-        To extract pixel values and labels from each item.
-        Returns a tuple of (images, labels) for compatibility with CNNTrainer
-        """
-
-        pixel_values = torch.stack([item["pixel_values"] for item in batch])
-        labels = torch.tensor([item["labels"] for item in batch])
-
-        return pixel_values, labels
-
-    # create data loaders with pin_memory only if GPU is available
-    pin_memory = torch.cuda.is_available()
-    
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=128,
-        shuffle=True,
-        pin_memory=pin_memory,    # for faster GPU transfer
-        collate_fn=collate_fn
-    )
-
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=128,
-        shuffle=False,
-        pin_memory=pin_memory,
-        collate_fn=collate_fn
-    )
-
-    # Initialize model and trainer
-    model = ImageNetCNN()
-    trainer = CNNTrainer(
-        train_dataloader=train_loader,
-        eta=0.001,
-        epoch=50,
-        loss_function=nn.CrossEntropyLoss(),
-        optimizer=torch.optim.Adam(model.parameters(), lr=0.001),
-        loss_vector=[],
-        accuracy_vector=[],
-        model=model,
-        device=device,
-        val_dataloader=val_loader
-    )
-     
-    # Train the model
-    trainer.train()
-     
-    # Evaluate on validation set
-    val_loss, val_accuracy = trainer.test()
-
-    print(f"Validation loss: {val_loss}")
+# This is the end of making classes for CNN implementation, not onto the imagenet_impl.py file. 

@@ -1,0 +1,14 @@
+Selected GPU: 1
+Number of classes: 1000
+Training with 40 epochs, train_ratio=0.008, val_ratio=0.004
+Train size: 10249, Validation size: 200
+Epoch [1/40], Batch [10/161], Loss: 6.9506, Train Acc: 0.0000, Val Acc: 0.0000
+Traceback (most recent call last):
+  File "/home/sar0033/blindscrambler/scripts/imagenet_impl.py", line 193, in <module>
+    trainer.train()
+  File "/home/sar0033/blindscrambler/src/blindscrambler/deepl/multiclass.py", line 518, in train
+    self.model.save_onnx()
+    ^^^^^^^^^^^^^^^^^^^^
+  File "/home/sar0033/blindscrambler/.venv/lib/python3.12/site-packages/torch/nn/modules/module.py", line 1962, in __getattr__
+    raise AttributeError(
+AttributeError: 'ImageNetCNN' object has no attribute 'save_onnx'

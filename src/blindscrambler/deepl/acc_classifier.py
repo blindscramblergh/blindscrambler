@@ -1,584 +1,509 @@
 import pandas as pd
-from torch import nn
+import polars as pl
+from torch import nn 
 import torch
 import glob
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
-from torch.nn import functional as F
+import matplotlib.pyplot as plt
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, accuracy_score, ConfusionMatrixDisplay
+from datasets import load_dataset
+from datasets import load_from_disk
+from torchvision import transforms
+from torchvision.ops import sigmoid_focal_loss
+import sys
+from torch.utils.data import DataLoader
 import subprocess
+import glob
+from sklearn.model_selection import train_test_split
+import os
 
-# make a global function about choosing the best GPU available
-def get_best_gpu(strategy="utilization"):
+# Dice Loss implementation for binary classification
+def dice_loss(y_pred, y_true, smooth=1.0):
     """
-    Select best GPU by utilization or memory
-    """
-    if strategy == "memory":
-        # Use PyTorch directly for free memory
-        free_mem = []
-        for i in range(torch.cuda.device_count()):
-            props = torch.cuda.mem_get_info(i) # (free, total)
-            free_mem.append(props[0])
+    Dice Loss for binary classification.
+    Good for imbalanced datasets as it measures overlap directly.
     
-        return free_mem.index(max(free_mem))
+    Args:
+        y_pred: Predicted logits (raw model output)
+        y_true: Ground truth binary labels (0 or 1)
+        smooth: Smoothing constant to avoid division by zero
+        
+    Returns:
+        Scalar dice loss value
+    """
+    # Apply sigmoid to convert logits to probabilities [0, 1]
+    y_pred_prob = torch.sigmoid(y_pred)
+    
+    # Flatten predictions and targets
+    y_pred_flat = y_pred_prob.view(-1)
+    y_true_flat = y_true.view(-1)
+    
+    # Calculate intersection and union
+    intersection = (y_pred_flat * y_true_flat).sum()
+    
+    # Dice coefficient: 2 * intersection / (sum of predictions + sum of targets)
+    dice_coefficient = (2.0 * intersection + smooth) / (y_pred_flat.sum() + y_true_flat.sum() + smooth)
+    
+    # Dice loss is 1 - dice coefficient
+    return 1.0 - dice_coefficient
 
-    elif strategy == "utilization":
-        result = subprocess.run(
-            ["nvidia-smi", "--query-gpu=utilization.gpu", "--format=csv,noheader,nounits"],
-            capture_output=True, text=True
-        )
-    
-        utilizations = [int(x.strip()) for x in result.stdout.strip().split("\n")]
-        return utilizations.index(min(utilizations))
 
-class ResidualBlock(nn.Module):
-    """
-    Simple Residual Block for ResNet.
-    
-    If input and output dimensions differ, uses 1x1 convolution to match dimensions.
-    """
-    def __init__(self, in_features, out_features, hidden_features=None):
-        super(ResidualBlock, self).__init__()
-        if hidden_features is None:
-            hidden_features = out_features
-        
-        self.fc1 = nn.Linear(in_features, hidden_features)
-        self.bn1 = nn.BatchNorm1d(hidden_features)
-        self.relu = nn.ReLU()
-        
-        self.fc2 = nn.Linear(hidden_features, out_features)
-        self.bn2 = nn.BatchNorm1d(out_features)
-        
-        # Shortcut connection
-        self.shortcut = nn.Identity()
-        if in_features != out_features:
-            self.shortcut = nn.Linear(in_features, out_features)
-    
-    def forward(self, x):
-        # Residual path
-        residual = self.shortcut(x)
-        
-        # Main path
-        out = self.fc1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-        
-        out = self.fc2(out)
-        out = self.bn2(out)
-        
-        # Add residual connection
-        out = out + residual
-        out = self.relu(out)
-        
-        return out
+class Dataset():
+    def __init__(self, directory, datafile, labelfiles):
 
-class ACCNet(nn.Module):
-    """
-    Simple ResNet-based neural network for ACC (Adaptive Cruise Control) state prediction.
-    
-    Architecture:
-    - Input: 11 features (v_t, v_{t-1}, ..., v_{t-10})
-    - ResNet blocks with residual connections
-    - Output: 2 classes (ACC enabled or not)
-    
-    Input shape: (batch_size, 11)
-    Output shape: (batch_size, 2)
-    """
-    
-    def __init__(self, input_features=11, hidden_sizes=[64, 128, 64], num_classes=2, dropout_rate=0.3):
+        # make the links using whcih we have to get data
+        self.data_links = directory + "/" + "*" + datafile
+
+        # make the data object.
+        self.processed_data = pl.DataFrame()
+
+    def time_enforcing(self, data, k):
         """
-        Initialize ACCNet.
+        Enforce time dependence on 1D velocity data by creating lagged features.
         
         Args:
-            input_features (int): Number of input features (default: 11 for historical speeds)
-            hidden_sizes (list): List of hidden layer sizes for ResNet blocks
-            num_classes (int): Number of output classes (default: 2 for binary classification)
-            dropout_rate (float): Dropout rate for regularization
-        """
-        super(ACCNet, self).__init__()
-        
-        self.input_features = input_features
-        self.hidden_sizes = hidden_sizes
-        self.num_classes = num_classes
-        
-        # Initial layer
-        self.initial = nn.Linear(input_features, hidden_sizes[0])
-        self.initial_bn = nn.BatchNorm1d(hidden_sizes[0])
-        self.initial_relu = nn.ReLU()
-        self.dropout = nn.Dropout(dropout_rate)
-        
-        # ResNet blocks
-        self.res_blocks = nn.ModuleList()
-        for i in range(len(hidden_sizes) - 1):
-            self.res_blocks.append(
-                ResidualBlock(hidden_sizes[i], hidden_sizes[i + 1], hidden_sizes[i])
-            )
-        
-        # Output layer
-        self.output = nn.Linear(hidden_sizes[-1], num_classes)
-        
-    def forward(self, x):
-        """
-        Forward pass through the network.
-        
-        Args:
-            x (torch.Tensor): Input tensor of shape (batch_size, input_features)
+            data: Polars DataFrame with velocity values (1D)
+            k: Number of time lags to create
             
         Returns:
-            torch.Tensor: Output logits of shape (batch_size, num_classes)
+            DataFrame with original and lagged velocity columns (None rows removed)
         """
-        # Initial layer
-        x = self.initial(x)
-        x = self.initial_bn(x)
-        x = self.initial_relu(x)
-        x = self.dropout(x)
-        
-        # ResNet blocks
-        for block in self.res_blocks:
-            x = block(x)
-            x = self.dropout(x)
-        
-        # Output layer
-        x = self.output(x)
-        
-        return x
+        # Convert to list for manipulation
+        vel_list = data["v_t"].to_list()  # Get the first column as list
+        N = len(vel_list)
 
+        for i in range(k):
+            new_list = [None] * N
+            new_list[i+1:N] = vel_list[0:N-i-1]
+            data = data.with_columns(pl.Series(f"v_t_minus_{i+1}", new_list))
 
-class ACCNetTrainer(nn.Module):
-    """
-    Training class for ACCNet with support for imbalanced classification losses.
-    
-    Supports:
-    - Dice Loss for imbalanced data
-    - Focal Loss for hard examples
-    - CrossEntropyLoss for baseline
-    """
-    
-    def __init__(self, model, train_dataloader, val_dataloader,
-                 loss_type='dice', eta=0.001, epochs=50, device=None):
+        data = data.select([
+            pl.all().exclude("acc_label"),
+            "acc_label"
+        ])
+
+        # Remove rows with null values
+        data = data.drop_nulls()
+        
+        return data
+
+    def zero_order_holdout(self, data, labels):
         """
-        Initialize ACCNetTrainer.
-        
+        Applies the zero order hold out technique and makes the number of samples equal for two data frames.
+
+        Params:
+            (1) data: polars.DataFrame
+                containing the data
+            (2) lables: polars.DataFrame
+                containing the features 
+
+        Returns:
+            returns one data frame that is ready to be neural networked :)
+        """
+        # empty data frame with three columns: time (s), speed (m/s), label (0/1)
+        combined_data = []
+
+        # we have different number of samples here 
+        label_samples = labels.height
+        data_samples = data.height 
+
+        count = 0
+        for i in range(data_samples):
+            if count < label_samples - 1:
+                if (data["Time"][i] < labels["Time"][count+1]):
+                    # make new sample based on zero order holdout
+                    row = {"time": data["Time"][i], "v_t": data["Message"][i], "acc_label": labels["Message"][count]}
+
+                    # extend the data frame
+                    combined_data.append(row)
+
+                else:
+                    # increment counter
+                    count += 1
+
+                    # make new sample for this data
+                    row = {"time": data["Time"][i], "v_t": data["Message"][i], "acc_label": labels["Message"][count]}
+
+                    # extend the data frame
+                    combined_data.append(row)
+
+            else: 
+                # make new sample by adding last one
+                row = {"time": data["Time"][i], "v_t": data["Message"][i], "acc_label": labels["Message"][label_samples - 1]}
+
+                # extend the data frame
+                combined_data.append(row)
+
+        return pl.DataFrame(combined_data)
+
+    def read_data(self, preprocessed_data_saved, save_path):
+        """
+        This function will read data and prepare the features based on time_enforcing
+
         Args:
-            model (nn.Module): The neural network model
-            train_dataloader (DataLoader): Training data loader
-            val_dataloader (DataLoader): Validation data loader
-            loss_type (str): Type of loss function ('dice', 'focal', or 'cross_entropy')
-            eta (float): Learning rate
-            epochs (int): Number of training epochs
-            device (torch.device): Device to use for training (default: CPU)
+            preprocessed_data_saved: Boolean to tell the class to process data or not 
+
+        Returns:
+            A data frame, ready to do machine learning on.
         """
-        super(ACCNetTrainer, self).__init__()
-        
-        self.model = model
-        self.train_dataloader = train_dataloader
-        self.val_dataloader = val_dataloader
-        self.loss_type = loss_type
-        self.eta = eta
-        self.epochs = epochs
-        self.device = device if device is not None else torch.device('cpu')
-        
-        # Initialize optimizer
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=eta)
-        
-        # Initialize loss function
-        if loss_type == 'dice':
-            self.loss_function = self._dice_loss
-        elif loss_type == 'focal':
-            self.loss_function = self._focal_loss
+        if preprocessed_data_saved:
+            print(f"loading the already saved data from {save_path}")
+            return pl.read_csv(save_path)
+
         else:
-            self.loss_function = nn.CrossEntropyLoss()
+            # glob them files
+            data_files = glob.glob(self.data_links)
+
+            # get the data frame to concat all the prepared data
+            entire_data = pl.DataFrame()
+
+            # for loop for each data file
+            for i in range(len(data_files)):
+                fl_data = pl.read_csv(data_files[i])
+
+                # from km/h to m/s
+                fl_data = fl_data.with_columns(
+                    (pl.col("Message") * 1000 / 3600).alias("Message")
+                )
+
+                # read in the labels and make binary label (make 6 equal to 1, all else 0)
+                fl_labels = pl.read_csv(
+                    data_files[i].replace("wheel_speed_fl.csv", "acc_status.csv"), 
+                )
+
+                # make binary label
+                fl_labels = fl_labels.with_columns(
+                    pl.when(pl.col("Message") == 6).then(1).otherwise(0).alias("Message")
+                )
+                
+                # only keep time and speed
+                fl_data = fl_data.select(["Time", "Message"])
+
+                # delete all the columns that have. Bus == 2 in labels
+                fl_labels = fl_labels.filter(
+                    pl.col("Bus") == 0
+                )
+
+                # only keep tiem and label
+                fl_labels = fl_labels.select(["Time", "Message"])
+
+                # create zero order holdout data 
+                zoh_data = self.zero_order_holdout(fl_data, fl_labels)
+
+                # some print statements
+                print(f"I am at the {i}th iteration")
+                print(f"The data file name is: ", data_files[i])
+                print(f"The label file name is: ", data_files[i].replace("wheel_speed_fl.csv", "acc_status.csv"))
+                print(f"The number of samples in this file is: ",  zoh_data.height)
+                print("\n")
+
+                # enforce the time dependence
+                time_enforced_zoh_data = self.time_enforcing(zoh_data, 10)
+
+                # concat it with the entire data dataframe
+                entire_data = pl.concat([entire_data, time_enforced_zoh_data], how = "vertical")
+
+            entire_data.write_csv(save_path)
+            print(f"Data saved to {save_path}")
+            return entire_data
+
+
+# MAKE A RESNET ARCHITECTURE FOR THIS PROBLEM
+
+# there will be 4 classes that I will make here:
+# (1) acc_conv1d
+# (2) ResidualBlock class 
+# (3) ResNet class 
+# (4) ACCTrainer class
+
+# 1D convolution class 
+class acc_conv1d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=1):
+        super().__init__()
+
+        # store attributes
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.kernel_size = kernel_size 
+        self.stride = stride
+        self.padding = padding
+
+        # initialize learnable parameters in the layer object
+        self.weight = nn.Parameter(torch.randn(out_channels, in_channels, self.kernel_size))
+        self.bias = nn.Parameter(torch.zeros(out_channels))
+
+        # do the reset parameters:
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        # Kaiming initialization: a special ionitialization to avoid exploding and vanishing gradients
+        nn.init.kaiming_uniform_(self.weight, nonlinearity="relu")
+        nn.init.zeros_(self.bias)
+
+    def forward(self, x):
+        # use pytorch's conv1d function here
+        return nn.functional.conv1d(x, self.weight, self.bias, stride=self.stride, padding=self.padding)
+
+# Residual Net Class: This one is taken from figure 2 of the Kaiming He paper 
+class Resblock1d(nn.Module):
+    def __init__(self, in_channels, out_channels, downsample=None):
+        super().__init__()
+
+        # 2 conv layers
+        self.conv1 = nn.Sequential(
+            acc_conv1d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(out_channels),
+            nn.ReLU()
+        )
+
+        self.conv2 = nn.Sequential(
+            acc_conv1d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(out_channels)
+        )
+
+        self.relu = nn.ReLU()
+        self.out_channels = out_channels
+        self.downsample = downsample
+
+    # the forward function
+    def forward(self, x):
+        residual = x
+        F_x = self.conv1(x)
+        F_x = self.conv2(F_x)
+        if self.downsample:
+            residual = self.downsample(x)
+        F_x = F_x + residual
+        F_x = self.relu(F_x)
+        return F_x
+
+# A class to build the ResNet architecture
+class ResNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # make relu just here:
+        self.relu = nn.ReLU()
+
+        # ---------- conv layer 1 ----------
+        self.conv1 = acc_conv1d(1, 16, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm1d(16)
         
-        # Tracking metrics
-        self.loss_vector = []
-        self.accuracy_vector = []
-        self.val_loss_vector = []
-        self.val_accuracy_vector = []
-        
-        # Normalization coefficients (for saving with ONNX)
-        self.speed_mean = None
-        self.speed_std = None
-        
-    @staticmethod
-    def _dice_loss(predictions, targets, smooth=1.0):
+        # ---------- conv layer 1 ----------
+        self.conv2 = acc_conv1d(16, 32, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm1d(32)
+
+        # ---------- residual block 1 ----------
+        self.residual1 = Resblock1d(32, 32)
+
+        # ---------- residual block 2 ----------
+        self.residual2 = Resblock1d(32, 32)
+
+        # ---------- Average Pooling ----------
+        self.global_avg_pool = nn.AdaptiveAvgPool1d(1)
+        self.flatten = nn.Flatten()
+
+        # ---------- Fully connected ----------
+        self.fc1 = nn.Linear(32, 1)
+        # make a dropout just in case to avoid overfitting
+        self.dropout = nn.Dropout(0.15)
+
+        # ---------- sigmoid ----------
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        # forward function to line up everything 
+        x = self.relu(self.bn1(self.conv1(x)))
+        x = self.relu(self.bn2(self.conv2(x)))
+        x = self.residual1(x)
+        x = self.residual2(x)
+        x = self.flatten(self.global_avg_pool(x))
+        x = self.dropout(x)
+        x = self.fc1(x)
+        # x = self.sigmoid(x)
+
+        return x
+                
+class ACCTrainer():
+    # constructor
+    def __init__(self, eta, epoch, train_dataloader, val_dataloader, loss_function, 
+            optimizer, loss_vector, accuracy_vector, model, device, scheduler):
+        super().__init__()
+
+        # make the class attributes
+        self.train_dataloader = train_dataloader    # the training data loader
+        self.val_dataloader = val_dataloader        # the validation data loader
+        self.eta = eta                              # learning rate 
+        self.epoch = epoch                          # the epoch
+        self.loss_function = loss_function          # loss function
+        self.optimizer = optimizer                  # optimizer
+        self.loss_vector = loss_vector              # to save loss
+        self.accuracy_vector = accuracy_vector      # to save accuracy
+        self.model = model                          
+        self.device = device
+        self.scheduler = scheduler
+
+    def save_onnx(self, file_path="/home/sar0033/blindscrambler/scripts/models", epoch_num=None):
         """
-        Dice Loss for imbalanced classification - more numerically stable.
+        Saves the trained model in ONNX format.
         
         Args:
-            predictions (torch.Tensor): Model output logits
-            targets (torch.Tensor): Ground truth labels
-            smooth (float): Smoothing constant to avoid division by zero
+            file_path (str): Path where the ONNX model will be saved
+            epoch_num (int): Epoch number to save in filename (defaults to total epochs)
             
-        Returns:
-            torch.Tensor: Dice loss value
+        Raises:
+            RuntimeError: If the model has not been trained yet
         """
-        # Convert logits to probabilities
-        probs = F.softmax(predictions, dim=1)
+        # Check if model has been trained
+        if not self.loss_vector or len(self.loss_vector) == 0:
+            raise RuntimeError("Model has not been trained yet. Please train the model before saving.")
         
-        # One-hot encode targets
-        targets_one_hot = F.one_hot(targets, num_classes=2).float()
+        # Use provided epoch number or default to total epochs
+        save_epoch = epoch_num if epoch_num is not None else self.epoch
         
-        # Calculate Dice loss per class
-        intersection = (probs * targets_one_hot).sum(dim=0)
-        cardinality = probs.sum(dim=0) + targets_one_hot.sum(dim=0)
+        # Set model to evaluation mode
+        self.model.eval()
+
+        # Create a dummy input with the correct shape (batch_size=1, channels=1, sequence_length=11)
+        dummy_input = torch.randn(1, 1, 11, device=self.device)
+
+        # output file path 
+        output_path = os.path.join(file_path, f"models_ACC_epoch_{save_epoch}.onnx") # saves the onnx model with epoch
+
+        # Export the model to ONNX format
+        torch.onnx.export(
+            self.model,                          # Model to export
+            dummy_input,                         # Model input
+            output_path,                         # Output file path
+            export_params=True,                  # Store trained parameters
+            opset_version=11,                    # ONNX opset version
+            do_constant_folding=True,            # Optimize constant folding
+            input_names=['input'],               # Input tensor name
+            output_names=['output'],             # Output tensor name
+            dynamic_axes={                       # Allow dynamic batch size
+                'input': {0: 'batch_size'},
+                'output': {0: 'batch_size'}
+            }
+        )
         
-        # Dice coefficient per class
-        dice_scores = 1 - (2.0 * intersection + smooth) / (cardinality + smooth)
-        
-        # Return mean over classes
-        return dice_scores.mean()
-    
-    @staticmethod
-    def _focal_loss(predictions, targets, alpha=1.0, gamma=2.0):
-        """
-        Focal Loss for hard examples.
-        
-        Args:
-            predictions (torch.Tensor): Model output logits
-            targets (torch.Tensor): Ground truth labels
-            alpha (float): Weighting factor
-            gamma (float): Focusing parameter
-            
-        Returns:
-            torch.Tensor: Focal loss value
-        """
-        ce_loss = F.cross_entropy(predictions, targets, reduction='none')
-        
-        # Get probabilities
-        probs = F.softmax(predictions, dim=1)
-        p_t = probs.gather(1, targets.unsqueeze(1)).squeeze(1)
-        
-        # Calculate focal loss
-        focal_loss = alpha * (1 - p_t) ** gamma * ce_loss
-        return focal_loss.mean()
-    
-    def train(self):
-        """Train the model for specified epochs."""
+        print(f'Model saved to {output_path}')
+
         self.model.train()
-        
-        for epoch in range(self.epochs):
+
+        return 0
+
+    # the training function
+    def train(self):
+        """
+        Train the ACC model and store epoch-level loss and accuracy.
+        """
+
+        # move model to device
+        self.model = self.model.to(self.device)
+
+        # training loop
+        for epoch in range(self.epoch):
+            self.model.train()
             epoch_loss = 0.0
             epoch_correct = 0
             epoch_total = 0
-            
-            for batch_idx, (features, labels) in enumerate(self.train_dataloader):
-                # Move data to device
-                features = features.to(self.device)
-                labels = labels.to(self.device)
-                
-                # Forward pass
+
+            for batch_idx, (X_batch, y_batch) in enumerate(self.train_dataloader):
+                # move batch to device
+                X_batch = X_batch.to(self.device)
+                y_batch = y_batch.to(self.device).float().view(-1, 1)
+
+                # zero gradients
                 self.optimizer.zero_grad()
-                outputs = self.model(features)
-                loss = self.loss_function(outputs, labels)
-                
-                # Backward pass
+
+                # forward pass
+                outputs = self.model(X_batch)
+
+                # compute loss
+                loss = self.loss_function(outputs, y_batch).mean()
+
+                # backward pass + optimizer step
                 loss.backward()
                 self.optimizer.step()
-                
-                # Metrics
-                _, predicted = torch.max(outputs.data, 1)
-                epoch_correct += (predicted == labels).sum().item()
-                epoch_total += labels.size(0)
+
+                # binary predictions
+                predicted = (outputs >= 0.5).float()
+
+                # batch accuracy
+                correct = (predicted == y_batch).sum().item()
+
+                # accumulate statistics
                 epoch_loss += loss.item()
-                
-                if (batch_idx + 1) % 10 == 0:
-                    batch_acc = (predicted == labels).sum().item() / labels.size(0)
-                    print(f'Epoch [{epoch + 1}/{self.epochs}], Batch [{batch_idx + 1}/{len(self.train_dataloader)}], Loss: {loss.item():.4f}, Acc: {batch_acc:.4f}')
-            
-            # Calculate epoch metrics
+                epoch_correct += correct
+                epoch_total += y_batch.size(0)
+
+                # print loss, train accuracy, and val accuracy every 2000 batches
+                if (batch_idx + 1) % 1000 == 0:
+                    batch_avg_loss = epoch_loss / (batch_idx + 1)
+                    batch_avg_accuracy = epoch_correct / epoch_total
+                    
+                    # compute validation accuracy
+                    self.model.eval()
+                    val_correct = 0
+                    val_total = 0
+                    
+                    with torch.no_grad():
+                        for val_X, val_y in self.val_dataloader:
+                            val_X = val_X.to(self.device)
+                            val_y = val_y.to(self.device).float().view(-1, 1)
+                            
+                            val_outputs = self.model(val_X)
+                            val_pred = (val_outputs >= 0.5).float()
+                            
+                            val_correct += (val_pred == val_y).sum().item()
+                            val_total += val_y.size(0)
+                    
+                    val_accuracy = val_correct / val_total
+                    
+                    # switch back to train mode
+                    self.model.train()
+                    
+                    print(
+                        f"Epoch [{epoch+1}/{self.epoch}], Batch [{batch_idx+1}/{len(self.train_dataloader)}], "
+                        f"Loss: {batch_avg_loss:.4f}, Train Acc: {batch_avg_accuracy:.4f}, Val Acc: {val_accuracy:.4f}"
+                    )
+
+            # epoch averages
             avg_loss = epoch_loss / len(self.train_dataloader)
             avg_accuracy = epoch_correct / epoch_total
-            
+
+            # store metrics
             self.loss_vector.append(avg_loss)
             self.accuracy_vector.append(avg_accuracy)
-            
-            # Validation
-            val_loss, val_acc = self.validate()
-            self.val_loss_vector.append(val_loss)
-            self.val_accuracy_vector.append(val_acc)
-            
-            print(f'Epoch [{epoch + 1}/{self.epochs}] - Train Loss: {avg_loss:.4f}, Train Acc: {avg_accuracy:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}')
-    
-    def validate(self):
-        """Validate the model on validation dataset."""
-        self.model.eval()
-        
-        val_loss = 0.0
-        correct = 0
-        total = 0
-        
-        with torch.no_grad():
-            for features, labels in self.val_dataloader:
-                # Move data to device
-                features = features.to(self.device)
-                labels = labels.to(self.device)
-                
-                outputs = self.model(features)
-                loss = self.loss_function(outputs, labels)
-                
-                val_loss += loss.item()
-                
-                _, predicted = torch.max(outputs.data, 1)
-                correct += (predicted == labels).sum().item()
-                total += labels.size(0)
-        
-        self.model.train()
-        
-        avg_val_loss = val_loss / len(self.val_dataloader)
-        val_accuracy = correct / total
-        
-        return avg_val_loss, val_accuracy
-    
-    def save_onnx(self, file_path):
-        """
-        Save model in ONNX format with normalization coefficients.
-        
-        Args:
-            file_path (str): Path to save the ONNX model
-        """
-        self.model.eval()
-        
-        # Create dummy input
-        dummy_input = torch.randn(1, self.model.input_features)
-        
-        # Export to ONNX
-        torch.onnx.export(
-            self.model,
-            dummy_input,
-            file_path,
-            export_params=True,
-            opset_version=11,
-            do_constant_folding=True,
-            input_names=['input'],
-            output_names=['output'],
-            dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
-        )
-        
-        print(f'Model saved to {file_path}')
 
+            # final validation pass for the epoch
+            self.model.eval()
+            val_correct = 0
+            val_total = 0
+            val_loss = 0.0
 
-class ACCNetDataset(Dataset):
-    """
-    PyTorch Dataset class for Adaptive Cruise Control (ACC) state prediction.
-    
-    Reads wheel speed data (decoded_wheel_speed_f1.csv) and ACC status data (acc_status.csv),
-    aligns them using Zero-Order Hold technique, and creates features from historical speed values.
-    
-    ACC Status Values:
-    - 0: off (System Inactive)
-    - 2: disabled (Standby)
-    - 5: faulted (System Error)
-    - 6: enabled (Active cruising) <- TARGET CLASS (label=1)
-    - 10: hold_waiting_user_cmd
-    - 11: hold
-    
-    Binary Classification Task: Predict if ACC is enabled (6) or not (0 = other states)
-    
-    Features created: v_t, v_{t-1}, v_{t-2}, ..., v_{t-k}
-    where k=10 (number of historical values to look back)
-    """
-    
-    def __init__(self, data_dir="/data/CPE_487-587/ACCDataset", k=10):
-        """
-        Initialize the ACCNetDataset.
-        
-        Args:
-            data_dir (str): Directory containing CSV files
-            k (int): Number of historical values to look back (default: 10)
-        """
-        self.k = k
-        self.data_dir = data_dir
-        
-        # Load wheel speed files
-        speed_pattern = f"{data_dir}/*decoded_wheel_speed_fl.csv"
-        speed_files = glob.glob(speed_pattern)
-        
-        # Load ACC status files
-        status_pattern = f"{data_dir}/*acc_status.csv"
-        status_files = glob.glob(status_pattern)
-        
-        if len(speed_files) == 0:
-            raise FileNotFoundError(f"No speed files found matching pattern: {speed_pattern}")
-        if len(status_files) == 0:
-            raise FileNotFoundError(f"No status files found matching pattern: {status_pattern}")
-        
-        print(f"Found {len(speed_files)} speed files and {len(status_files)} status files")
-        
-        # Read all speed files and align with status files
-        all_samples = []
-        
-        # Match speed and status files by timestamp prefix
-        for speed_file in speed_files:
-            # Extract timestamp from filename (e.g., "1234567890_decoded_wheel_speed_f1.csv")
-            timestamp = speed_file.split('/')[-1].split('_')[0]
-            
-            # Find corresponding status file
-            status_file = None
-            for sf in status_files:
-                if timestamp in sf:
-                    status_file = sf
-                    break
-            
-            if status_file is None:
-                print(f"  Warning: No matching status file for {speed_file}, skipping...")
-                continue
-            
-            try:
-                # Load speed data
-                speed_df = pd.read_csv(speed_file)
-                status_df = pd.read_csv(status_file)
-                
-                print(f"  Processing pair:")
-                print(f"    Speed:  {speed_file.split('/')[-1]}")
-                print(f"    Status: {status_file.split('/')[-1]}")
-                
-                # Extract Time and Message columns
-                if 'Time' not in speed_df.columns or 'Message' not in speed_df.columns:
-                    print(f"    Skipping: Missing Time or Message column in speed file")
-                    continue
-                if 'Time' not in status_df.columns or 'Message' not in status_df.columns:
-                    print(f"    Skipping: Missing Time or Message column in status file")
-                    continue
-                
-                # Get speed times and values (convert km/h to m/s)
-                speed_times = speed_df['Time'].values.astype(np.float32)
-                speed_values = (speed_df['Message'].values.astype(np.float32)) / 3.6  # km/h to m/s
-                
-                # Get status times and values
-                status_times = status_df['Time'].values.astype(np.float32)
-                status_values = status_df['Message'].values.astype(np.int64)
-                
-                # Align using Zero-Order Hold: for each speed sample, use the latest status value
-                # Create a synchronized dataset
-                for i, (t, v) in enumerate(zip(speed_times, speed_values)):
-                    # Find the latest status value at or before this time
-                    status_mask = status_times <= t
-                    if status_mask.any():
-                        latest_status_idx = np.where(status_mask)[0][-1]
-                        acc_status = status_values[latest_status_idx]
-                        
-                        # Binary label: 1 if enabled (6), 0 otherwise
-                        label = 1 if acc_status == 6 else 0
-                        
-                        all_samples.append({
-                            'time': t,
-                            'speed': v,
-                            'label': label,
-                            'acc_status': acc_status
-                        })
-                
-                print(f"    Processed {len(all_samples)} total samples so far")
-                
-            except Exception as e:
-                print(f"    Error processing files: {e}")
-                continue
-        
-        if not all_samples:
-            raise ValueError("No samples could be created from the data files")
-        
-        # Create DataFrame from all samples
-        self.df = pd.DataFrame(all_samples)
-        self.speeds = self.df['speed'].values.astype(np.float32)
-        self.labels = self.df['label'].values.astype(int)
-        
-        print(f"\nTotal samples created: {len(self.speeds)}")
-        print(f"Label distribution:")
-        unique, counts = np.unique(self.labels, return_counts=True)
-        for label_val, count in zip(unique, counts):
-            state = "enabled (6)" if label_val == 1 else "not enabled (other)"
-            print(f"  Label {label_val} ({state}): {count} samples ({100*count/len(self.labels):.1f}%)")
-        
-        # Calculate valid indices (we need at least k previous values)
-        self.valid_indices = np.arange(self.k, len(self.speeds))
-        print(f"Valid samples after windowing (k={self.k}): {len(self.valid_indices)}")
-        
-    def __len__(self):
-        """Return the number of valid samples."""
-        return len(self.valid_indices)
-    
-    def __getitem__(self, idx):
-        """
-        Get a sample from the dataset.
-        
-        Args:
-            idx (int): Index of the sample
-            
-        Returns:
-            tuple: (features, label) where features is a tensor of historical speeds [v_t, v_{t-1}, ..., v_{t-k}]
-        """
-        # Get the actual index in the data
-        actual_idx = self.valid_indices[idx]
-        
-        # Create feature vector: [v_t, v_{t-1}, v_{t-2}, ..., v_{t-k}]
-        # Note: speeds are already in m/s
-        feature_indices = np.arange(actual_idx - self.k, actual_idx + 1)
-        features = self.speeds[feature_indices].astype(np.float32)
-        
-        # Get the label for this time step (binary: 1 if ACC enabled, 0 otherwise)
-        label = self.labels[actual_idx]
-        
-        # Convert to tensors
-        features_tensor = torch.from_numpy(features)
-        label_tensor = torch.tensor(label, dtype=torch.long)
-        
-        return features_tensor, label_tensor
+            with torch.no_grad():
+                for val_X, val_y in self.val_dataloader:
+                    val_X = val_X.to(self.device)
+                    val_y = val_y.to(self.device).float().view(-1, 1)
 
-if __name__ == "__main__":
-    # get the best gpu based on utilization:
+                    val_outputs = self.model(val_X)
+                    loss_val = self.loss_function(val_outputs, val_y).mean()
 
-    # implementing the multiclass thing
-    device_id = get_best_gpu(strategy="utilization")
-    device = torch.device(f"cuda:{device_id}")
-    print(f"Selected GPU: {device_id}")
+                    val_pred = (val_outputs >= 0.5).float()
 
-    # Create dataset instance
-    print("Creating ACCNetDataset...")
-    dataset = ACCNetDataset(data_dir="/data/CPE_487-587/ACCDataset", k=10)
-    
-    print(f"\nDataset created with {len(dataset)} samples")
-    
-    # Split dataset into train and validation
-    train_size = int(0.8 * len(dataset))
-    val_size = len(dataset) - train_size
-    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
-    
-    # Create DataLoaders for batch training
-    batch_size = 32
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    
-    print(f"\nDataLoaders created with batch size: {batch_size}")
-    print(f"Training batches: {len(train_loader)}")
-    print(f"Validation batches: {len(val_loader)}")
-    
-    # Display a sample batch
-    print("\nSample batch:")
-    for features, labels in train_loader:
-        print(f"  Features shape: {features.shape}")
-        print(f"  Labels shape: {labels.shape}")
-        print(f"  Features (first sample): {features[0]}")
-        print(f"  Labels (first sample): {labels[0]}")
-        print(f"  Label distribution in batch: {np.unique(labels.numpy(), return_counts=True)}")
-        break
+                    val_correct += (val_pred == val_y).sum().item()
+                    val_total += val_y.size(0)
+                    val_loss += loss_val.item()
 
-    print("\nACCNetDataset is ready for training!")
+            avg_val_loss = val_loss / len(self.val_dataloader)
+            avg_val_accuracy = val_correct / val_total
 
-    # Create model
-    model = ACCNet(input_features=11, hidden_sizes=[64, 128, 64], num_classes=2)
-    model.to(device)
+            # save checkpoint every 10 epochs
+            if (epoch + 1) % 10 == 0:
+                print(f"Saving checkpoint at epoch {epoch + 1}...")
+                self.save_onnx(epoch_num=epoch + 1)
+                self.model.train()  # switch back to train mode
 
-    # Create trainer with CrossEntropyLoss
-    trainer = ACCNetTrainer(
-        model=model,
-        train_dataloader=train_loader,
-        val_dataloader=val_loader,
-        loss_type='cross_entropy',  # or 'dice', 'focal'
-        eta=0.001,
-        epochs=50,
-        device=device
-    )
-
-    # Train
-    trainer.train()
-
-    # Save
-    trainer.save_onnx('acc_model.onnx')
+            # scheduler step
+            if self.scheduler is not None:
+                self.scheduler.step()

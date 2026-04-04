@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from torch import nn 
 import torch
 import matplotlib.pyplot as plt
@@ -37,6 +38,28 @@ def get_best_gpu(strategy="utilization"):
         utilizations = [int(x.strip()) for x in result.stdout.strip().split("\n")]
         return utilizations.index(min(utilizations))
 
+# make a function to show images
+def save_image(dataset, index, class_names, name, transform):
+    """
+    This funtion takes in the dataset and the index of an image 
+    in the dataset. It then saves the image in given directory.
+    This function does not return anything.
+    """
+    example_image = dataset[index]
+    image = example_image["pixel_values"] if transform else example_image["image"]
+    label_id = example_image["labels"] if transform else example_image["label"]
+
+    full_label = class_names[label_id]
+    primary_name = full_label.split(',')[0].strip()
+
+    # make the figure
+    plt.figure(figsize=(8,8))
+    plt.imshow(image[np.random.randint(3)]) if transform else plt.imshow(image)
+    plt.title(f"ID {label_id}: {primary_name}\n({full_label})", fontsize=10)
+    plt.axis("off")
+    plt.savefig(f"{name}.png")
+
+    return 0
 
 # main function for all the tasks:
 if __name__ == "__main__":
@@ -44,8 +67,8 @@ if __name__ == "__main__":
     # Set up argument parser
     parser = argparse.ArgumentParser(description="Train CNNTrainer on ImageNet dataset")
     parser.add_argument("--epochs", type=int, default=50, help="Number of training epochs (default: 50)")
-    parser.add_argument("--train_ratio", type=float, default=0.005, help="Training data ratio (default: 0.005)")
-    parser.add_argument("--val_ratio", type=float, default=0.0008, help="Validation data ratio (default: 0.0008)")
+    parser.add_argument("--train_ratio", type=float, default=0.010, help="Training data ratio (default: 0.005)")
+    parser.add_argument("--val_ratio", type=float, default=0.004, help="Validation data ratio (default: 0.0008)")
     args = parser.parse_args()
 
     # implementing the multiclass thing
@@ -71,7 +94,8 @@ if __name__ == "__main__":
     train_dataset = dataset["train"].select(range(train_size))
     val_dataset = dataset["validation"].select(range(val_size))
 
-    class_names = train_dataset.features["label"].names
+    class_names_train = train_dataset.features["label"].names
+    class_names_val = val_dataset.features["label"].names
 
     # making the transforms, for train and val images
     train_transform = transforms.Compose([
@@ -107,8 +131,11 @@ if __name__ == "__main__":
             "labels": labels
         }
 
-    train_dataset = train_dataset.with_transform(preprocess_train)
-    val_dataset = val_dataset.with_transform(preprocess_val)
+    train_dataset_transformed = train_dataset.with_transform(preprocess_train)
+    val_dataset_transformed = val_dataset.with_transform(preprocess_val)
+
+    save_image(train_dataset, 69, class_names_train, "sample_image_train", transform = False)
+    save_image(train_dataset_transformed, 69, class_names_train, "sample_transformed_image_train", transform = True)
 
     # the next step would be to create Data loaders
     def collate_fn(batch):
@@ -126,16 +153,16 @@ if __name__ == "__main__":
     pin_memory = torch.cuda.is_available()
     
     train_loader = DataLoader(
-        train_dataset,
-        batch_size=128,
+        train_dataset_transformed,
+        batch_size=64,
         shuffle=True,
         pin_memory=pin_memory,    # for faster GPU transfer
         collate_fn=collate_fn
     )
 
     val_loader = DataLoader(
-        val_dataset,
-        batch_size=128,
+        val_dataset_transformed,
+        batch_size=64,
         shuffle=False,
         pin_memory=pin_memory,
         collate_fn=collate_fn
@@ -164,9 +191,6 @@ if __name__ == "__main__":
      
     # Train the model
     trainer.train()
-     
-    # Evaluate on validation set
-    val_loss, val_accuracy = trainer.test()
 
     # make plots for (1) loss and (2) accuracy
     plt.figure(figsize=(12, 5))
@@ -189,7 +213,5 @@ if __name__ == "__main__":
 
     plt.savefig("training_plots.png")
 
-    print(f"Validation loss: {val_loss}")
-
     # save the model
-    trainer.save_onnx('CNN_model.onnx')
+    trainer.save_onnx('models/dummy')

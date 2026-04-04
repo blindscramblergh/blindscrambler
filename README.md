@@ -1,129 +1,110 @@
 # BlindScrambler
 
-A Python library for machine learning and deep learning
+A deep learning project implementing CNN architectures for image classification and accelerometer-based classification tasks.
 
-## Installation
+## CNN Architecture
 
-### Prerequisites
+The **ImageNetCNN** is a 5-layer convolutional neural network designed for image classification on ImageNet-scale datasets. The architecture features:
 
-- Python >= 3.12
-- Rust (for building from source)
-- FFmpeg (required for Manim video rendering)
+- **5 Convolutional Blocks**: Progressive feature extraction with channels: 3 → 64 → 128 → 256 → 512 → 512
+- **Batch Normalization**: Applied after each convolutional layer for training stability
+- **Max Pooling**: Spatial dimensionality reduction after each block
+- **Global Average Pooling**: Converts spatial features to a fixed-size vector
+- **2 Fully Connected Layers**: 512 → 1024 → 1000 (for ImageNet classification)
+- **Total Trainable Parameters**: ~5.46 million
 
-### Install using PyPi
+The network uses ReLU activations and 3×3 kernels throughout, with Dropout (p=0.2) applied before the final classification layer.
 
-- pip install blindscrambler==0.1.15
+## Loading and Using ONNX Models
 
-### Install from Source
+The trained models are exported as ONNX format for efficient inference. Use `onnxruntime` to load and run predictions:
 
-```bash
-pip install -e .
-```
-
-This will install all required dependencies including:
-- PyTorch
-- Manim (animation library)
-- NumPy, Pandas, Matplotlib
-- scikit-learn, SciPy
-
-## Running the Weight Animation
-
-The weight animation visualizes how neural network weights evolve during training on a binary classification task.
-
-### Quick Start
-
-#### Option 1: Using the Bash Script (Recommended)
+### Installation
 
 ```bash
-cd scripts
-bash bash_scripts/weight_animation.sh
+uv add onnxruntime
 ```
 
-This will:
-- Start the training and animation process in the background
-- Log output to `scripts/logs/weights_animation.out`
-- Display the process ID for monitoring
+### CNN Model Inference
 
-#### Option 2: Run Python Script Directly
-
-```bash
-cd scripts
-python binaryclassification_animate_impl.py
-```
-
-### What the Animation Does
-
-1. **Training Phase**: Trains a 2-layer neural network for binary classification
-   - Input features: 40,000 dimensions
-   - Training samples: 200
-   - Training epochs: 5,000
-   - Learning rate: 0.01
-   - Uses GPU if available (CUDA), otherwise CPU
-
-2. **Animation Phase**: Creates 4 separate video animations showing the evolution of:
-   - Weight matrix 1
-   - Weight matrix 2
-   - Weight matrix 3
-   - Weight matrix 4
-
-3. **Output**: Videos are saved in the current directory as:
-   - `weight_1_evolution.mp4`
-   - `weight_2_evolution.mp4`
-   - `weight_3_evolution.mp4`
-   - `weight_4_evolution.mp4`
-
-### Configuration
-
-You can modify the training parameters in `scripts/binaryclassification_animate_impl.py`:
+Load and use the trained CNN model (`models_CNN_epoch_40.onnx`):
 
 ```python
-# Adjust dataset size
-n = 200      # Number of samples
-d = 40000    # Number of features
+import onnxruntime as rt
+import numpy as np
 
-# Adjust training parameters
-result = binary_classification(d, n, epochs=5000, lr=0.01)
+# Load the model
+sess = rt.InferenceSession("models/models_CNN_epoch_40.onnx")
+
+# Get input/output names
+input_name = sess.get_inputs()[0].name
+output_name = sess.get_outputs()[0].name
+
+# Prepare input (example: 224x224 RGB image, normalized)
+# Shape: (1, 3, 224, 224) - batch size 1, 3 channels, 224x224 pixels
+image = np.random.randn(1, 3, 224, 224).astype(np.float32)
+
+# Run inference
+predictions = sess.run([output_name], {input_name: image})[0]
+
+# Get predicted class
+predicted_class = np.argmax(predictions[0])
+print(f"Predicted class: {predicted_class}")
 ```
 
-To enable loss plotting, set:
+### ACC Classifier Model Inference
+
+Load and use the accelerometer classifier model (`models_ACC_epoch_30.onnx`):
+
 ```python
-plot = True
+import onnxruntime as rt
+import numpy as np
+
+# Load the model
+sess = rt.InferenceSession("models/models_ACC_epoch_30.onnx")
+
+# Get input/output names
+input_name = sess.get_inputs()[0].name
+output_name = sess.get_outputs()[0].name
+
+# Prepare input (accelerometer features with time lags)
+# Adjust shape based on your feature dimension
+features = np.random.randn(1, feature_dim).astype(np.float32)
+
+# Run inference
+predictions = sess.run([output_name], {input_name: features})[0]
+
+# Get predicted class
+predicted_class = np.argmax(predictions[0])
+print(f"Predicted class: {predicted_class}")
 ```
 
-### Animation Parameters
+### Batch Inference
 
-Adjust animation settings by modifying the `animate_large_heatmap` call:
+For processing multiple samples at once:
 
 ```python
-animation.animate_large_heatmap(
-    weights[i], 
-    dt=0.04,              # Time per frame (seconds)
-    file_name=f"weight_{i + 1}_evolution",
-    title_str="Weight Evolution"
-)
+import onnxruntime as rt
+import numpy as np
+
+sess = rt.InferenceSession("models/models_CNN_epoch_40.onnx")
+input_name = sess.get_inputs()[0].name
+output_name = sess.get_outputs()[0].name
+
+# Batch of images (shape: 32, 3, 224, 224)
+batch = np.random.randn(32, 3, 224, 224).astype(np.float32)
+
+# Run inference on batch
+predictions = sess.run([output_name], {input_name: batch})[0]
+
+# Get predictions for each sample
+predicted_classes = np.argmax(predictions, axis=1)
+print(f"Batch predictions: {predicted_classes}")
 ```
 
-### Monitoring Progress
+## Key Notes
 
-- Check the log file: `cat scripts/logs/weights_animation.out`
-- Monitor the process: `ps aux | grep binaryclassification`
-- Training progress and rendering status are printed to the log
-
-## Project Structure
-
-```
-blindscrambler/
-├── src/blindscrambler/          # Python package
-│   ├── animation/               # Animation modules
-│   ├── deepl/                   # Deep learning models
-│   ├── model/                   # ML models (logit, regression)
-│   └── matrix/                  # Matrix operations
-├── scripts/                     # Executable scripts
-│   ├── binaryclassification_animate_impl.py
-│   └── bash_scripts/            # Automation scripts
-└── target/                      # Rust build artifacts
-```
-
-## Authors
-
-- blindscramblergh (blindscrambler@gmail.com)
+- ONNX Runtime provides fast, cross-platform inference without requiring PyTorch at runtime
+- Ensure input data is normalized appropriately for your model
+- Models expect `float32` inputs
+- Batch processing significantly speeds up throughput
