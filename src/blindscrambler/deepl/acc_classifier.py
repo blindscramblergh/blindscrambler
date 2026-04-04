@@ -71,7 +71,6 @@ class ResidualBlock(nn.Module):
         
         return out
 
-
 class ACCNet(nn.Module):
     """
     Simple ResNet-based neural network for ACC (Adaptive Cruise Control) state prediction.
