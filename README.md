@@ -108,3 +108,47 @@ print(f"Batch predictions: {predicted_classes}")
 - Ensure input data is normalized appropriately for your model
 - Models expect `float32` inputs
 - Batch processing significantly speeds up throughput
+
+## Generative Models
+
+The project includes three different generative models trained on image data:
+
+### Supported Models
+
+- **GAN (Generative Adversarial Network)**: `models_gan_epoch_20.onnx`
+  - Generates realistic images from random latent vectors (128-dimensional)
+  - Outputs images in the range [-1, 1]
+
+- **VAE (Variational Autoencoder)**: `models_vae_epoch_20.onnx`
+  - Encodes and reconstructs images
+  - Takes 64×64×3 images as input and outputs reconstructed versions
+
+- **Diffusion Model (DDPM)**: `models_diffusion_epoch_20.onnx`
+  - Generates images via iterative denoising
+  - Takes image and timestep inputs, progressively refines noise to images
+
+### Generative Model Inference & Evaluation
+
+The `gen_model_inference.py` script generates synthetic images from all three models and computes quality metrics to compare their performance:
+
+```bash
+cd scripts
+python gen_model_inference.py
+```
+
+**Metrics Computed:**
+
+1. **Image Gradient** - Measures edge intensity and detail in images
+2. **Laplacian Variance** - Sharpness metric (higher = sharper details)
+3. **Tenengrad Criterion** - Focus measure using Sobel operators
+4. **Gradient Magnitude** - Average gradient strength across the image
+5. **High Frequency Ratio** - Proportion of high-frequency components in Fourier domain
+6. **GLCM Contrast** - Texture analysis using Gray-Level Co-occurrence Matrix
+7. **Mean Local Standard Deviation** - Local texture variability
+
+**Output:**
+
+- Box plot visualization: `metrics_comparison_boxplots.png`
+- Console summary statistics for each metric and model
+
+This analysis helps evaluate which generative model produces images with better quality characteristics, higher detail, and better texture properties.

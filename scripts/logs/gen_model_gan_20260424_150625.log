@@ -1,0 +1,172 @@
+Starting Generator Model Training at Fri Apr 24 03:06:25 PM CDT 2026
+Model: gan
+Epochs: 10
+Batch Size: 32
+Learning Rate: 0.001
+Data Fraction: 0.02
+Process ID: 1749105
+======================================================
+Python Process PID: 1749111
+2026-04-24 15:06:31,383 - INFO - Selected GPU: 0
+2026-04-24 15:06:32,504 - INFO - Dataset size: 4051 images
+2026-04-24 15:07:07,698 - INFO - Batch shape: torch.Size([32, 3, 64, 64])
+2026-04-24 15:07:07,699 - INFO - Batch range: [0.00, 1.00]
+2026-04-24 15:07:07,910 - INFO - Models and optimizers initialized
+2026-04-24 15:07:07,910 - INFO - Starting GAN training...
+Epoch [1/10] Batch [0/127] D_loss: 0.6934 G_loss: 0.3277
+Epoch [1/10] Batch [10/127] D_loss: 0.9823 G_loss: 2.2889
+Epoch [1/10] Batch [20/127] D_loss: 0.7485 G_loss: 1.1187
+Epoch [1/10] Batch [30/127] D_loss: 2.2550 G_loss: 1.2749
+Epoch [1/10] Batch [40/127] D_loss: 0.7074 G_loss: 0.7515
+Epoch [1/10] Batch [50/127] D_loss: 1.3478 G_loss: 0.6043
+Epoch [1/10] Batch [60/127] D_loss: 0.6939 G_loss: 0.7738
+Epoch [1/10] Batch [70/127] D_loss: 0.6762 G_loss: 2.0348
+Epoch [1/10] Batch [80/127] D_loss: 0.7425 G_loss: 5.9436
+Epoch [1/10] Batch [90/127] D_loss: 0.6188 G_loss: 2.1414
+Epoch [1/10] Batch [100/127] D_loss: 0.6878 G_loss: 1.0161
+Epoch [1/10] Batch [110/127] D_loss: 0.7842 G_loss: 0.8069
+Epoch [1/10] Batch [120/127] D_loss: 0.7069 G_loss: 1.1343
+Saving checkpoint at epoch 1...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_1.onnx
+Epoch [2/10] Batch [0/127] D_loss: 0.6983 G_loss: 1.0801
+Epoch [2/10] Batch [10/127] D_loss: 0.6712 G_loss: 0.9630
+Epoch [2/10] Batch [20/127] D_loss: 0.7401 G_loss: 0.6384
+Epoch [2/10] Batch [30/127] D_loss: 0.6757 G_loss: 1.0748
+Epoch [2/10] Batch [40/127] D_loss: 0.6844 G_loss: 0.7851
+Epoch [2/10] Batch [50/127] D_loss: 0.6976 G_loss: 0.6938
+Epoch [2/10] Batch [60/127] D_loss: 0.6919 G_loss: 0.6916
+Epoch [2/10] Batch [70/127] D_loss: 0.7010 G_loss: 0.6919
+Epoch [2/10] Batch [80/127] D_loss: 0.6908 G_loss: 0.6895
+Epoch [2/10] Batch [90/127] D_loss: 0.6953 G_loss: 0.7031
+Epoch [2/10] Batch [100/127] D_loss: 0.6982 G_loss: 0.7432
+Epoch [2/10] Batch [110/127] D_loss: 0.6869 G_loss: 0.7510
+Epoch [2/10] Batch [120/127] D_loss: 0.6926 G_loss: 0.7126
+Saving checkpoint at epoch 2...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_2.onnx
+Epoch [3/10] Batch [0/127] D_loss: 0.6943 G_loss: 0.7115
+Epoch [3/10] Batch [10/127] D_loss: 0.6972 G_loss: 0.6829
+Epoch [3/10] Batch [20/127] D_loss: 0.6930 G_loss: 0.9441
+Epoch [3/10] Batch [30/127] D_loss: 0.6917 G_loss: 0.6837
+Epoch [3/10] Batch [40/127] D_loss: 0.6978 G_loss: 0.7975
+Epoch [3/10] Batch [50/127] D_loss: 0.6882 G_loss: 0.8119
+Epoch [3/10] Batch [60/127] D_loss: 0.6901 G_loss: 0.6621
+Epoch [3/10] Batch [70/127] D_loss: 0.6899 G_loss: 0.7526
+Epoch [3/10] Batch [80/127] D_loss: 0.6941 G_loss: 0.7005
+Epoch [3/10] Batch [90/127] D_loss: 0.6952 G_loss: 0.6588
+Epoch [3/10] Batch [100/127] D_loss: 0.6889 G_loss: 0.6390
+Epoch [3/10] Batch [110/127] D_loss: 0.6908 G_loss: 0.8006
+Epoch [3/10] Batch [120/127] D_loss: 0.6926 G_loss: 0.7515
+Saving checkpoint at epoch 3...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_3.onnx
+Epoch [4/10] Batch [0/127] D_loss: 0.6910 G_loss: 0.7442
+Epoch [4/10] Batch [10/127] D_loss: 0.6998 G_loss: 0.6124
+Epoch [4/10] Batch [20/127] D_loss: 0.6962 G_loss: 0.6515
+Epoch [4/10] Batch [30/127] D_loss: 0.6915 G_loss: 0.7400
+Epoch [4/10] Batch [40/127] D_loss: 0.6949 G_loss: 0.7137
+Epoch [4/10] Batch [50/127] D_loss: 0.7040 G_loss: 0.6795
+Epoch [4/10] Batch [60/127] D_loss: 0.6933 G_loss: 0.6814
+Epoch [4/10] Batch [70/127] D_loss: 0.6950 G_loss: 0.7586
+Epoch [4/10] Batch [80/127] D_loss: 0.6935 G_loss: 0.7099
+Epoch [4/10] Batch [90/127] D_loss: 0.7006 G_loss: 0.7344
+Epoch [4/10] Batch [100/127] D_loss: 0.6969 G_loss: 0.7151
+Epoch [4/10] Batch [110/127] D_loss: 0.6917 G_loss: 0.7141
+Epoch [4/10] Batch [120/127] D_loss: 0.6966 G_loss: 0.7056
+Saving checkpoint at epoch 4...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_4.onnx
+Epoch [5/10] Batch [0/127] D_loss: 0.6943 G_loss: 0.7481
+Epoch [5/10] Batch [10/127] D_loss: 0.6943 G_loss: 0.7165
+Epoch [5/10] Batch [20/127] D_loss: 0.6941 G_loss: 0.6861
+Epoch [5/10] Batch [30/127] D_loss: 0.7044 G_loss: 0.6593
+Epoch [5/10] Batch [40/127] D_loss: 0.6935 G_loss: 0.6984
+Epoch [5/10] Batch [50/127] D_loss: 0.6926 G_loss: 0.6804
+Epoch [5/10] Batch [60/127] D_loss: 0.6902 G_loss: 0.6860
+Epoch [5/10] Batch [70/127] D_loss: 0.6980 G_loss: 0.7507
+Epoch [5/10] Batch [80/127] D_loss: 0.6959 G_loss: 0.6937
+Epoch [5/10] Batch [90/127] D_loss: 0.6947 G_loss: 0.6995
+Epoch [5/10] Batch [100/127] D_loss: 0.6963 G_loss: 0.7470
+Epoch [5/10] Batch [110/127] D_loss: 0.6966 G_loss: 0.7074
+Epoch [5/10] Batch [120/127] D_loss: 0.6926 G_loss: 0.7575
+Saving checkpoint at epoch 5...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_5.onnx
+Epoch [6/10] Batch [0/127] D_loss: 0.6937 G_loss: 0.7005
+Epoch [6/10] Batch [10/127] D_loss: 0.6983 G_loss: 0.6578
+Epoch [6/10] Batch [20/127] D_loss: 0.6946 G_loss: 0.6874
+Epoch [6/10] Batch [30/127] D_loss: 0.6948 G_loss: 0.6984
+Epoch [6/10] Batch [40/127] D_loss: 0.6973 G_loss: 0.6890
+Epoch [6/10] Batch [50/127] D_loss: 0.6946 G_loss: 0.6977
+Epoch [6/10] Batch [60/127] D_loss: 0.6919 G_loss: 0.7387
+Epoch [6/10] Batch [70/127] D_loss: 0.6932 G_loss: 0.7320
+Epoch [6/10] Batch [80/127] D_loss: 0.6985 G_loss: 0.6959
+Epoch [6/10] Batch [90/127] D_loss: 0.6964 G_loss: 0.6449
+Epoch [6/10] Batch [100/127] D_loss: 0.6929 G_loss: 0.6781
+Epoch [6/10] Batch [110/127] D_loss: 0.6961 G_loss: 0.7008
+Epoch [6/10] Batch [120/127] D_loss: 0.6941 G_loss: 0.6929
+Saving checkpoint at epoch 6...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_6.onnx
+Epoch [7/10] Batch [0/127] D_loss: 0.6921 G_loss: 0.7196
+Epoch [7/10] Batch [10/127] D_loss: 0.7059 G_loss: 0.6374
+Epoch [7/10] Batch [20/127] D_loss: 0.6942 G_loss: 0.6909
+Epoch [7/10] Batch [30/127] D_loss: 0.6934 G_loss: 0.6691
+Epoch [7/10] Batch [40/127] D_loss: 0.6938 G_loss: 0.7102
+Epoch [7/10] Batch [50/127] D_loss: 0.6933 G_loss: 0.6995
+Epoch [7/10] Batch [60/127] D_loss: 0.6955 G_loss: 0.7045
+Epoch [7/10] Batch [70/127] D_loss: 0.6922 G_loss: 0.6942
+Epoch [7/10] Batch [80/127] D_loss: 0.6936 G_loss: 0.6724
+Epoch [7/10] Batch [90/127] D_loss: 0.6988 G_loss: 0.7006
+Epoch [7/10] Batch [100/127] D_loss: 0.6959 G_loss: 0.7002
+Epoch [7/10] Batch [110/127] D_loss: 0.6942 G_loss: 0.7290
+Epoch [7/10] Batch [120/127] D_loss: 0.6938 G_loss: 0.7045
+Saving checkpoint at epoch 7...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_7.onnx
+Epoch [8/10] Batch [0/127] D_loss: 0.6934 G_loss: 0.6983
+Epoch [8/10] Batch [10/127] D_loss: 0.6955 G_loss: 0.6836
+Epoch [8/10] Batch [20/127] D_loss: 0.6971 G_loss: 0.6878
+Epoch [8/10] Batch [30/127] D_loss: 0.6941 G_loss: 0.6945
+Epoch [8/10] Batch [40/127] D_loss: 0.6941 G_loss: 0.7210
+Epoch [8/10] Batch [50/127] D_loss: 0.6922 G_loss: 0.7008
+Epoch [8/10] Batch [60/127] D_loss: 0.6943 G_loss: 0.6813
+Epoch [8/10] Batch [70/127] D_loss: 0.6915 G_loss: 0.7085
+Epoch [8/10] Batch [80/127] D_loss: 0.6946 G_loss: 0.7021
+Epoch [8/10] Batch [90/127] D_loss: 0.6948 G_loss: 0.7019
+Epoch [8/10] Batch [100/127] D_loss: 0.6978 G_loss: 0.6752
+Epoch [8/10] Batch [110/127] D_loss: 0.6995 G_loss: 0.6872
+Epoch [8/10] Batch [120/127] D_loss: 0.6932 G_loss: 0.6649
+Saving checkpoint at epoch 8...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_8.onnx
+Epoch [9/10] Batch [0/127] D_loss: 0.6903 G_loss: 0.7684
+Epoch [9/10] Batch [10/127] D_loss: 0.6998 G_loss: 0.6800
+Epoch [9/10] Batch [20/127] D_loss: 0.6928 G_loss: 0.6654
+Epoch [9/10] Batch [30/127] D_loss: 0.6967 G_loss: 0.7469
+Epoch [9/10] Batch [40/127] D_loss: 0.6939 G_loss: 0.7024
+Epoch [9/10] Batch [50/127] D_loss: 0.7017 G_loss: 0.6641
+Epoch [9/10] Batch [60/127] D_loss: 0.6931 G_loss: 0.6825
+Epoch [9/10] Batch [70/127] D_loss: 0.7007 G_loss: 0.7156
+Epoch [9/10] Batch [80/127] D_loss: 0.6949 G_loss: 0.7183
+Epoch [9/10] Batch [90/127] D_loss: 0.6921 G_loss: 0.7508
+Epoch [9/10] Batch [100/127] D_loss: 0.6941 G_loss: 0.7044
+Epoch [9/10] Batch [110/127] D_loss: 0.6945 G_loss: 0.7146
+Epoch [9/10] Batch [120/127] D_loss: 0.6938 G_loss: 0.7054
+Saving checkpoint at epoch 9...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_9.onnx
+Epoch [10/10] Batch [0/127] D_loss: 0.6890 G_loss: 0.6619
+Epoch [10/10] Batch [10/127] D_loss: 0.6912 G_loss: 0.6980
+Epoch [10/10] Batch [20/127] D_loss: 0.6969 G_loss: 0.7119
+Epoch [10/10] Batch [30/127] D_loss: 0.6955 G_loss: 0.6828
+Epoch [10/10] Batch [40/127] D_loss: 0.6932 G_loss: 0.7110
+Epoch [10/10] Batch [50/127] D_loss: 0.7054 G_loss: 0.7101
+Epoch [10/10] Batch [60/127] D_loss: 0.6677 G_loss: 0.6932
+Epoch [10/10] Batch [70/127] D_loss: 0.6914 G_loss: 1.2491
+Epoch [10/10] Batch [80/127] D_loss: 0.7118 G_loss: 2.7822
+Epoch [10/10] Batch [90/127] D_loss: 0.6451 G_loss: 2.4282
+Epoch [10/10] Batch [100/127] D_loss: 0.6999 G_loss: 0.7460
+Epoch [10/10] Batch [110/127] D_loss: 1.0038 G_loss: 1.0296
+Epoch [10/10] Batch [120/127] D_loss: 0.9101 G_loss: 0.9025
+Saving checkpoint at epoch 10...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_10.onnx
+Saving final model and samples at 10...
+Traceback (most recent call last):
+  File "/home/sar0033/blindscrambler/scripts/gen_model_impl.py", line 192, in <module>
+    gen_trainer.gan_train()
+  File "/home/sar0033/blindscrambler/src/blindscrambler/deepl/gen_model.py", line 344, in gan_train
+    self.save_samples_gan(self.generator, epoch)
+TypeError: trainer.save_samples_gan() missing 1 required positional argument: 'n_samples'

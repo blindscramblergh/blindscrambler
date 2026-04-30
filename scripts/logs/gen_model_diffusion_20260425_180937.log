@@ -1,0 +1,38 @@
+Starting Generator Model Training at Sat Apr 25 06:09:37 PM CDT 2026
+Model: diffusion
+Epochs: 5
+Batch Size: 64
+Learning Rate: 0.002
+Data Fraction: 0.04
+Process ID: 2987634
+======================================================
+Python Process PID: 2987640
+2026-04-25 18:09:44,389 - INFO - Selected GPU: 2
+2026-04-25 18:09:45,658 - INFO - Dataset size: 8103 images
+2026-04-25 18:11:05,159 - INFO - Batch shape: torch.Size([64, 3, 64, 64])
+2026-04-25 18:11:05,160 - INFO - Batch range: [0.00, 1.00]
+2026-04-25 18:11:05,525 - INFO - Models and optimizers initialized
+2026-04-25 18:11:05,526 - INFO - Starting Diffusion model training...
+Epoch [1/5] Batch [0/127] Loss: 1.0035
+Epoch [1/5] Batch [10/127] Loss: 0.9623
+Epoch [1/5] Batch [20/127] Loss: 0.8251
+Epoch [1/5] Batch [30/127] Loss: 0.7827
+Epoch [1/5] Batch [40/127] Loss: 0.7229
+Epoch [1/5] Batch [50/127] Loss: 0.6908
+Epoch [1/5] Batch [60/127] Loss: 0.6386
+Epoch [1/5] Batch [70/127] Loss: 0.5900
+Epoch [1/5] Batch [80/127] Loss: 0.5341
+Epoch [1/5] Batch [90/127] Loss: 0.4827
+Epoch [1/5] Batch [100/127] Loss: 0.4374
+Epoch [1/5] Batch [110/127] Loss: 0.4170
+Epoch [1/5] Batch [120/127] Loss: 0.4069
+Loss at epoch 1: 0.636 --> Best model ever (stored)
+Saving checkpoint at epoch 1...
+/home/sar0033/blindscrambler/src/blindscrambler/deepl/gen_model.py:256: TracerWarning: Using len to get tensor shape might cause the trace to be incorrect. Recommended usage would be tensor.shape[0]. Passing a tensor of different shape might lead to errors or silently give incorrect results.
+  n = len(x)
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_diffusion_epoch_1.onnx
+Epoch [2/5] Batch [0/127] Loss: 0.4310
+Epoch [2/5] Batch [10/127] Loss: 0.4062
+Epoch [2/5] Batch [20/127] Loss: 0.3894
+Epoch [2/5] Batch [30/127] Loss: 0.3737
+Epoch [2/5] Batch [40/127] Loss: 0.3643

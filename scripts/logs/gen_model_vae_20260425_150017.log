@@ -1,0 +1,118 @@
+Starting Generator Model Training at Sat Apr 25 03:00:17 PM CDT 2026
+Model: vae
+Epochs: 25
+Batch Size: 64
+Learning Rate: 0.002
+Data Fraction: 0.04
+Process ID: 2837859
+======================================================
+Python Process PID: 2837865
+2026-04-25 15:00:23,014 - INFO - Selected GPU: 0
+2026-04-25 15:00:24,136 - INFO - Dataset size: 8103 images
+2026-04-25 15:01:37,152 - INFO - Batch shape: torch.Size([64, 3, 64, 64])
+2026-04-25 15:01:37,153 - INFO - Batch range: [0.00, 1.00]
+2026-04-25 15:01:37,420 - INFO - Models and optimizers initialized
+2026-04-25 15:01:37,420 - INFO - Starting VAE training...
+Epoch [1/25] Batch [0/127] Loss: 8600.8379
+Epoch [1/25] Batch [10/127] Loss: 8148.1108
+Epoch [1/25] Batch [20/127] Loss: 7470.9834
+Epoch [1/25] Batch [30/127] Loss: 7598.2422
+Epoch [1/25] Batch [40/127] Loss: 7379.9858
+Epoch [1/25] Batch [50/127] Loss: 7322.7739
+Epoch [1/25] Batch [60/127] Loss: 7048.9780
+Epoch [1/25] Batch [70/127] Loss: 7230.4355
+Epoch [1/25] Batch [80/127] Loss: 7245.0693
+Epoch [1/25] Batch [90/127] Loss: 6990.8911
+Epoch [1/25] Batch [100/127] Loss: 7122.9688
+Epoch [1/25] Batch [110/127] Loss: 6941.6172
+Epoch [1/25] Batch [120/127] Loss: 6935.9863
+====> Epoch 1 Average loss: 7312.3028 (KL beta: 0.000)
+Saving checkpoint at epoch 1...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_vae_epoch_1.onnx
+Epoch [2/25] Batch [0/127] Loss: 6830.1646
+Epoch [2/25] Batch [10/127] Loss: 6791.5234
+Epoch [2/25] Batch [20/127] Loss: 6643.9409
+Epoch [2/25] Batch [30/127] Loss: 6777.8071
+Epoch [2/25] Batch [40/127] Loss: 6720.4370
+Epoch [2/25] Batch [50/127] Loss: 6721.3193
+Epoch [2/25] Batch [60/127] Loss: 6935.9858
+Epoch [2/25] Batch [70/127] Loss: 6726.5684
+Epoch [2/25] Batch [80/127] Loss: 6764.7520
+Epoch [2/25] Batch [90/127] Loss: 6628.5669
+Epoch [2/25] Batch [100/127] Loss: 6603.1406
+Epoch [2/25] Batch [110/127] Loss: 6719.1626
+Epoch [2/25] Batch [120/127] Loss: 6542.9961
+====> Epoch 2 Average loss: 6776.1010 (KL beta: 0.100)
+Epoch [3/25] Batch [0/127] Loss: 6495.6743
+Epoch [3/25] Batch [10/127] Loss: 6675.4531
+Epoch [3/25] Batch [20/127] Loss: 6644.0117
+Epoch [3/25] Batch [30/127] Loss: 6685.9897
+Epoch [3/25] Batch [40/127] Loss: 6797.5273
+Epoch [3/25] Batch [50/127] Loss: 6584.4478
+Epoch [3/25] Batch [60/127] Loss: 6555.1953
+Epoch [3/25] Batch [70/127] Loss: 6644.7656
+Epoch [3/25] Batch [80/127] Loss: 6672.9189
+Epoch [3/25] Batch [90/127] Loss: 6763.6890
+Epoch [3/25] Batch [100/127] Loss: 6592.3135
+Epoch [3/25] Batch [110/127] Loss: 6455.4302
+Epoch [3/25] Batch [120/127] Loss: 6781.1919
+====> Epoch 3 Average loss: 6651.1379 (KL beta: 0.200)
+Epoch [4/25] Batch [0/127] Loss: 6723.8848
+Epoch [4/25] Batch [10/127] Loss: 6746.6279
+Epoch [4/25] Batch [20/127] Loss: 6462.5962
+Epoch [4/25] Batch [30/127] Loss: 6570.9214
+Epoch [4/25] Batch [40/127] Loss: 6330.1040
+Epoch [4/25] Batch [50/127] Loss: 6526.1602
+Epoch [4/25] Batch [60/127] Loss: 6551.8345
+Epoch [4/25] Batch [70/127] Loss: 6452.0264
+Epoch [4/25] Batch [80/127] Loss: 6782.8496
+Epoch [4/25] Batch [90/127] Loss: 6581.3711
+Epoch [4/25] Batch [100/127] Loss: 6673.2651
+Epoch [4/25] Batch [110/127] Loss: 6403.5903
+Epoch [4/25] Batch [120/127] Loss: 6617.5864
+====> Epoch 4 Average loss: 6583.5321 (KL beta: 0.300)
+Epoch [5/25] Batch [0/127] Loss: 6496.9282
+Epoch [5/25] Batch [10/127] Loss: 6569.0723
+Epoch [5/25] Batch [20/127] Loss: 6576.7412
+Epoch [5/25] Batch [30/127] Loss: 6472.9707
+Epoch [5/25] Batch [40/127] Loss: 6664.4937
+Epoch [5/25] Batch [50/127] Loss: 6742.1841
+Epoch [5/25] Batch [60/127] Loss: 6410.3384
+Epoch [5/25] Batch [70/127] Loss: 6612.2700
+Epoch [5/25] Batch [80/127] Loss: 6644.3828
+Epoch [5/25] Batch [90/127] Loss: 6530.1460
+Epoch [5/25] Batch [100/127] Loss: 6597.0483
+Epoch [5/25] Batch [110/127] Loss: 6610.9707
+Epoch [5/25] Batch [120/127] Loss: 6420.4028
+====> Epoch 5 Average loss: 6559.3623 (KL beta: 0.400)
+Epoch [6/25] Batch [0/127] Loss: 6458.4375
+Epoch [6/25] Batch [10/127] Loss: 6607.6997
+Epoch [6/25] Batch [20/127] Loss: 6214.7798
+Epoch [6/25] Batch [30/127] Loss: 6632.7266
+Epoch [6/25] Batch [40/127] Loss: 6413.3882
+Epoch [6/25] Batch [50/127] Loss: 6673.7046
+Epoch [6/25] Batch [60/127] Loss: 6589.8965
+Epoch [6/25] Batch [70/127] Loss: 6668.7539
+Epoch [6/25] Batch [80/127] Loss: 6574.2051
+Epoch [6/25] Batch [90/127] Loss: 6636.1045
+Epoch [6/25] Batch [100/127] Loss: 6672.5190
+Epoch [6/25] Batch [110/127] Loss: 6398.3750
+Epoch [6/25] Batch [120/127] Loss: 6429.8950
+====> Epoch 6 Average loss: 6529.8593 (KL beta: 0.500)
+Saving checkpoint at epoch 6...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_vae_epoch_6.onnx
+Epoch [7/25] Batch [0/127] Loss: 6377.0840
+Epoch [7/25] Batch [10/127] Loss: 6483.3193
+Epoch [7/25] Batch [20/127] Loss: 6624.4175
+Epoch [7/25] Batch [30/127] Loss: 6365.0088
+Epoch [7/25] Batch [40/127] Loss: 6429.4966
+Epoch [7/25] Batch [50/127] Loss: 6421.3813
+Epoch [7/25] Batch [60/127] Loss: 6665.5425
+Epoch [7/25] Batch [70/127] Loss: 6433.5918
+Epoch [7/25] Batch [80/127] Loss: 6515.6230
+Epoch [7/25] Batch [90/127] Loss: 6531.9126
+Epoch [7/25] Batch [100/127] Loss: 6266.6001
+Epoch [7/25] Batch [110/127] Loss: 6749.4092
+Epoch [7/25] Batch [120/127] Loss: 6410.8091
+====> Epoch 7 Average loss: 6517.8905 (KL beta: 0.600)
+Epoch [8/25] Batch [0/127] Loss: 6440.7632

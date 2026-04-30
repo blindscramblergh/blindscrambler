@@ -1,0 +1,233 @@
+Starting Generator Model Training at Fri Apr 24 02:58:04 PM CDT 2026
+Model: gan
+Epochs: 10
+Batch Size: 32
+Learning Rate: 0.002
+Data Fraction: 0.03
+Process ID: 1738287
+======================================================
+Python Process PID: 1738293
+2026-04-24 14:58:10,734 - INFO - Selected GPU: 0
+2026-04-24 14:58:11,921 - INFO - Dataset size: 6077 images
+2026-04-24 14:58:47,494 - INFO - Batch shape: torch.Size([32, 3, 64, 64])
+2026-04-24 14:58:47,494 - INFO - Batch range: [0.00, 1.00]
+2026-04-24 14:58:47,745 - INFO - Models and optimizers initialized
+2026-04-24 14:58:47,745 - INFO - Starting GAN training...
+Epoch [1/10] Batch [0/190] D_loss: 0.6934 G_loss: 2.6815
+Epoch [1/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [1/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 1...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_1.onnx
+Epoch [2/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [2/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 2...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_2.onnx
+Epoch [3/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [3/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 3...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_3.onnx
+Epoch [4/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [4/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 4...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_4.onnx
+Epoch [5/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [5/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 5...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_5.onnx
+Epoch [6/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [6/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 6...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_6.onnx
+Epoch [7/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [7/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 7...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_7.onnx
+Epoch [8/10] Batch [0/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [10/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [20/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [30/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [40/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [50/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [60/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [70/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [80/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [90/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [100/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [110/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [120/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [130/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [140/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [150/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [160/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [170/190] D_loss: 50.0000 G_loss: 10.0000
+Epoch [8/10] Batch [180/190] D_loss: 50.0000 G_loss: 10.0000
+Saving checkpoint at epoch 8...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_8.onnx
+Epoch [9/10] Batch [0/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [10/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [20/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [30/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [40/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [50/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [60/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [70/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [80/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [90/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [100/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [110/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [120/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [130/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [140/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [150/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [160/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [170/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [9/10] Batch [180/190] D_loss: 10.0000 G_loss: 90.0000
+Saving checkpoint at epoch 9...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_9.onnx
+Epoch [10/10] Batch [0/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [10/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [20/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [30/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [40/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [50/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [60/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [70/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [80/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [90/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [100/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [110/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [120/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [130/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [140/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [150/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [160/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [170/190] D_loss: 10.0000 G_loss: 90.0000
+Epoch [10/10] Batch [180/190] D_loss: 10.0000 G_loss: 90.0000
+Saving checkpoint at epoch 10...
+Model saved to /home/sar0033/blindscrambler/scripts/models/models_gan_epoch_10.onnx
+Saving final model and samples at 10...
+Traceback (most recent call last):
+  File "/home/sar0033/blindscrambler/scripts/gen_model_impl.py", line 192, in <module>
+    gen_trainer.gan_train()
+  File "/home/sar0033/blindscrambler/src/blindscrambler/deepl/gen_model.py", line 339, in gan_train
+    self.save_samples_gan(self.generator, epoch, 32)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: trainer.save_samples_gan() missing 1 required positional argument: 'n_samples'

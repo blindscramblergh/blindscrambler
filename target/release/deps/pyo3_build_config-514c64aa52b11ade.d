@@ -1,0 +1,14 @@
+/home/sar0033/blindscrambler/target/release/deps/pyo3_build_config-514c64aa52b11ade.d: /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs /home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config-file.txt /home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config.txt
+
+/home/sar0033/blindscrambler/target/release/deps/libpyo3_build_config-514c64aa52b11ade.rlib: /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs /home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config-file.txt /home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config.txt
+
+/home/sar0033/blindscrambler/target/release/deps/libpyo3_build_config-514c64aa52b11ade.rmeta: /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs /home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs /home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config-file.txt /home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config.txt
+
+/home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/lib.rs:
+/home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/errors.rs:
+/home/sar0033/.cache/puccinialin/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pyo3-build-config-0.22.6/src/impl_.rs:
+/home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config-file.txt:
+/home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out/pyo3-build-config.txt:
+
+# env-dep:CARGO_PKG_VERSION=0.22.6
+# env-dep:OUT_DIR=/home/sar0033/blindscrambler/target/release/build/pyo3-build-config-e21877f347285dd1/out
